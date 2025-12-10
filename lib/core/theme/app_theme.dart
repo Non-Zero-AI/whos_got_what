@@ -43,14 +43,25 @@ class AppTheme {
   static const Color _warmAccent = Color(0xFFDAA520);
 
 
-  static ThemeData getTheme(AppPalette palette) {
+  static ThemeData getTheme({
+    required AppPalette palette,
+    required ThemeMode mode,
+    Color? accentColor,
+  }) {
+    // If we want detailed mapping:
+    // We can say if mode == dark, force a dark palette if 'palette' is matteLight.
+    // Or we simply respect 'palette' as the source of truth for high-level "scheme".
+    // For now, let's just use the palette as the base, and allow accent override.
+
+    final Color? overrideAccent = accentColor;
+
     switch (palette) {
       case AppPalette.matteLight:
         return _buildTheme(
           brightness: Brightness.light,
           bg: _lightBg,
           surface: _lightSurface,
-          primary: _lightAccent,
+          primary: overrideAccent ?? _lightAccent,
           text: _lightText,
         );
       case AppPalette.matteDark:
@@ -58,15 +69,15 @@ class AppTheme {
           brightness: Brightness.dark,
           bg: _darkBg,
           surface: _darkSurface,
-          primary: _darkAccent,
+          primary: overrideAccent ?? _darkAccent,
           text: _darkText,
         );
       case AppPalette.luxury:
-         return _buildTheme(
+        return _buildTheme(
           brightness: Brightness.dark,
           bg: _navyBg,
           surface: _navySurface,
-          primary: _goldAccent,
+          primary: overrideAccent ?? _goldAccent,
           text: _luxuryText,
         );
       case AppPalette.clean:
@@ -74,7 +85,7 @@ class AppTheme {
           brightness: Brightness.light,
           bg: _cleanBg,
           surface: _cleanSurface,
-          primary: _cleanAccent,
+          primary: overrideAccent ?? _cleanAccent,
           text: _cleanText,
         );
       case AppPalette.creamyDark:
@@ -82,7 +93,7 @@ class AppTheme {
           brightness: Brightness.dark,
           bg: _creamyBg,
           surface: _creamySurface,
-          primary: _warmAccent,
+          primary: overrideAccent ?? _warmAccent,
           text: _creamyText,
         );
     }

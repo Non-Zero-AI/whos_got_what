@@ -4,16 +4,24 @@ import 'app_theme.dart';
 
 class ThemeState {
   final AppPalette palette;
+  final ThemeMode mode;
+  final Color? accentColor;
 
   const ThemeState({
-    this.palette = AppPalette.matteLight, // Default
+    this.palette = AppPalette.matteLight,
+    this.mode = ThemeMode.system,
+    this.accentColor,
   });
 
   ThemeState copyWith({
     AppPalette? palette,
+    ThemeMode? mode,
+    Color? accentColor,
   }) {
     return ThemeState(
       palette: palette ?? this.palette,
+      mode: mode ?? this.mode,
+      accentColor: accentColor ?? this.accentColor,
     );
   }
 }
@@ -27,15 +35,13 @@ class ThemeNotifier extends Notifier<ThemeState> {
   void setPalette(AppPalette palette) {
     state = state.copyWith(palette: palette);
   }
-  
-  // Helper to toggle between simple light/dark map if we want basic toggling, 
-  // but for now we expose setPalette.
-  void toggleSimpleMode() {
-    if (state.palette == AppPalette.matteLight) {
-        state = state.copyWith(palette: AppPalette.matteDark);
-    } else {
-        state = state.copyWith(palette: AppPalette.matteLight);
-    }
+
+  void toggleTheme(bool isDark) {
+    state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+  }
+
+  void setAccentColor(Color color) {
+    state = state.copyWith(accentColor: color);
   }
 }
 

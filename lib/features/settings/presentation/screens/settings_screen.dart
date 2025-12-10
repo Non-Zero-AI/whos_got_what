@@ -45,13 +45,13 @@ class SettingsScreen extends ConsumerWidget {
 
 class _ColorOption extends ConsumerWidget {
   final Color color;
-  final Color selected;
+  final Color? selected;
 
   const _ColorOption({required this.color, required this.selected});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSelected = color.toARGB32() == selected.toARGB32();
+    final isSelected = selected != null && color.value == selected!.value;
     return GestureDetector(
       onTap: () => ref.read(themeProvider.notifier).setAccentColor(color),
       child: Container(
