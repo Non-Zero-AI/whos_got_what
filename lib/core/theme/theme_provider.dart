@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app_theme.dart';
 
 class ThemeState {
-  final ThemeMode mode;
-  final Color accentColor;
+  final AppPalette palette;
 
   const ThemeState({
-    required this.mode,
-    required this.accentColor,
+    this.palette = AppPalette.matteLight, // Default
   });
 
   ThemeState copyWith({
-    ThemeMode? mode,
-    Color? accentColor,
+    AppPalette? palette,
   }) {
     return ThemeState(
-      mode: mode ?? this.mode,
-      accentColor: accentColor ?? this.accentColor,
+      palette: palette ?? this.palette,
     );
   }
 }
@@ -24,18 +21,21 @@ class ThemeState {
 class ThemeNotifier extends Notifier<ThemeState> {
   @override
   ThemeState build() {
-    return const ThemeState(
-      mode: ThemeMode.system,
-      accentColor: Color(0xFF6200EE), // Default accent
-    );
+    return const ThemeState();
   }
 
-  void toggleTheme(bool isDark) {
-    state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+  void setPalette(AppPalette palette) {
+    state = state.copyWith(palette: palette);
   }
-
-  void setAccentColor(Color color) {
-    state = state.copyWith(accentColor: color);
+  
+  // Helper to toggle between simple light/dark map if we want basic toggling, 
+  // but for now we expose setPalette.
+  void toggleSimpleMode() {
+    if (state.palette == AppPalette.matteLight) {
+        state = state.copyWith(palette: AppPalette.matteDark);
+    } else {
+        state = state.copyWith(palette: AppPalette.matteLight);
+    }
   }
 }
 

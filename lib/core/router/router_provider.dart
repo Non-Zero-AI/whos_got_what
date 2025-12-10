@@ -9,18 +9,21 @@ import 'package:whos_got_what/features/onboarding/presentation/screens/onboardin
 import 'package:whos_got_what/features/profile/presentation/screens/profile_screen.dart';
 import 'package:whos_got_what/features/settings/presentation/screens/settings_screen.dart';
 import 'package:whos_got_what/shared/widgets/scaffold_with_navbar.dart';
+import 'package:whos_got_what/features/design_system_demo/design_system_demo_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/design',
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isLoggedIn = authState.value?.session?.user != null;
       final isAuthRoute = state.uri.path == '/auth' || state.uri.path == '/onboarding';
 
       if (authState.isLoading) return null; // Wait for loading
+
+      if (state.uri.path == '/design') return null;
 
       if (!isLoggedIn && !isAuthRoute) {
         return '/onboarding'; 
@@ -83,6 +86,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/design',
+        builder: (context, state) => const DesignSystemDemoScreen(),
       ),
     ],
   );

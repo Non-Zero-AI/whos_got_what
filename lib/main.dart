@@ -27,9 +27,7 @@ class WhosGotWhatApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: AppConstants.appName,
-      theme: AppTheme.lightTheme(themeState.accentColor),
-      darkTheme: AppTheme.darkTheme(themeState.accentColor),
-      themeMode: themeState.mode,
+      theme: AppTheme.getTheme(themeState.palette),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
