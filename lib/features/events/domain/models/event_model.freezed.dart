@@ -24,12 +24,15 @@ mixin _$EventModel {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  DateTime get date => throw _privateConstructorUsedError;
+  DateTime get startDate => throw _privateConstructorUsedError;
+  DateTime? get endDate => throw _privateConstructorUsedError;
+  bool get isAllDay => throw _privateConstructorUsedError;
   String get location => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
   String get imageUrl => throw _privateConstructorUsedError;
   String get organizerId => throw _privateConstructorUsedError;
   int get likes => throw _privateConstructorUsedError;
+  int get views => throw _privateConstructorUsedError;
   bool get isBookmarked => throw _privateConstructorUsedError;
 
   /// Serializes this EventModel to a JSON map.
@@ -53,12 +56,15 @@ abstract class $EventModelCopyWith<$Res> {
     String id,
     String title,
     String description,
-    DateTime date,
+    DateTime startDate,
+    DateTime? endDate,
+    bool isAllDay,
     String location,
     double price,
     String imageUrl,
     String organizerId,
     int likes,
+    int views,
     bool isBookmarked,
   });
 }
@@ -81,12 +87,15 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
     Object? id = null,
     Object? title = null,
     Object? description = null,
-    Object? date = null,
+    Object? startDate = null,
+    Object? endDate = freezed,
+    Object? isAllDay = null,
     Object? location = null,
     Object? price = null,
     Object? imageUrl = null,
     Object? organizerId = null,
     Object? likes = null,
+    Object? views = null,
     Object? isBookmarked = null,
   }) {
     return _then(
@@ -106,11 +115,21 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
                     ? _value.description
                     : description // ignore: cast_nullable_to_non_nullable
                         as String,
-            date:
-                null == date
-                    ? _value.date
-                    : date // ignore: cast_nullable_to_non_nullable
+            startDate:
+                null == startDate
+                    ? _value.startDate
+                    : startDate // ignore: cast_nullable_to_non_nullable
                         as DateTime,
+            endDate:
+                freezed == endDate
+                    ? _value.endDate
+                    : endDate // ignore: cast_nullable_to_non_nullable
+                        as DateTime?,
+            isAllDay:
+                null == isAllDay
+                    ? _value.isAllDay
+                    : isAllDay // ignore: cast_nullable_to_non_nullable
+                        as bool,
             location:
                 null == location
                     ? _value.location
@@ -136,6 +155,11 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
                     ? _value.likes
                     : likes // ignore: cast_nullable_to_non_nullable
                         as int,
+            views:
+                null == views
+                    ? _value.views
+                    : views // ignore: cast_nullable_to_non_nullable
+                        as int,
             isBookmarked:
                 null == isBookmarked
                     ? _value.isBookmarked
@@ -160,12 +184,15 @@ abstract class _$$EventModelImplCopyWith<$Res>
     String id,
     String title,
     String description,
-    DateTime date,
+    DateTime startDate,
+    DateTime? endDate,
+    bool isAllDay,
     String location,
     double price,
     String imageUrl,
     String organizerId,
     int likes,
+    int views,
     bool isBookmarked,
   });
 }
@@ -187,12 +214,15 @@ class __$$EventModelImplCopyWithImpl<$Res>
     Object? id = null,
     Object? title = null,
     Object? description = null,
-    Object? date = null,
+    Object? startDate = null,
+    Object? endDate = freezed,
+    Object? isAllDay = null,
     Object? location = null,
     Object? price = null,
     Object? imageUrl = null,
     Object? organizerId = null,
     Object? likes = null,
+    Object? views = null,
     Object? isBookmarked = null,
   }) {
     return _then(
@@ -212,11 +242,21 @@ class __$$EventModelImplCopyWithImpl<$Res>
                 ? _value.description
                 : description // ignore: cast_nullable_to_non_nullable
                     as String,
-        date:
-            null == date
-                ? _value.date
-                : date // ignore: cast_nullable_to_non_nullable
+        startDate:
+            null == startDate
+                ? _value.startDate
+                : startDate // ignore: cast_nullable_to_non_nullable
                     as DateTime,
+        endDate:
+            freezed == endDate
+                ? _value.endDate
+                : endDate // ignore: cast_nullable_to_non_nullable
+                    as DateTime?,
+        isAllDay:
+            null == isAllDay
+                ? _value.isAllDay
+                : isAllDay // ignore: cast_nullable_to_non_nullable
+                    as bool,
         location:
             null == location
                 ? _value.location
@@ -242,6 +282,11 @@ class __$$EventModelImplCopyWithImpl<$Res>
                 ? _value.likes
                 : likes // ignore: cast_nullable_to_non_nullable
                     as int,
+        views:
+            null == views
+                ? _value.views
+                : views // ignore: cast_nullable_to_non_nullable
+                    as int,
         isBookmarked:
             null == isBookmarked
                 ? _value.isBookmarked
@@ -259,12 +304,15 @@ class _$EventModelImpl implements _EventModel {
     required this.id,
     required this.title,
     required this.description,
-    required this.date,
+    required this.startDate,
+    this.endDate,
+    this.isAllDay = false,
     required this.location,
     required this.price,
     required this.imageUrl,
     required this.organizerId,
     this.likes = 0,
+    this.views = 0,
     this.isBookmarked = false,
   });
 
@@ -278,7 +326,12 @@ class _$EventModelImpl implements _EventModel {
   @override
   final String description;
   @override
-  final DateTime date;
+  final DateTime startDate;
+  @override
+  final DateTime? endDate;
+  @override
+  @JsonKey()
+  final bool isAllDay;
   @override
   final String location;
   @override
@@ -292,11 +345,14 @@ class _$EventModelImpl implements _EventModel {
   final int likes;
   @override
   @JsonKey()
+  final int views;
+  @override
+  @JsonKey()
   final bool isBookmarked;
 
   @override
   String toString() {
-    return 'EventModel(id: $id, title: $title, description: $description, date: $date, location: $location, price: $price, imageUrl: $imageUrl, organizerId: $organizerId, likes: $likes, isBookmarked: $isBookmarked)';
+    return 'EventModel(id: $id, title: $title, description: $description, startDate: $startDate, endDate: $endDate, isAllDay: $isAllDay, location: $location, price: $price, imageUrl: $imageUrl, organizerId: $organizerId, likes: $likes, views: $views, isBookmarked: $isBookmarked)';
   }
 
   @override
@@ -308,7 +364,11 @@ class _$EventModelImpl implements _EventModel {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.date, date) || other.date == date) &&
+            (identical(other.startDate, startDate) ||
+                other.startDate == startDate) &&
+            (identical(other.endDate, endDate) || other.endDate == endDate) &&
+            (identical(other.isAllDay, isAllDay) ||
+                other.isAllDay == isAllDay) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.price, price) || other.price == price) &&
@@ -317,6 +377,7 @@ class _$EventModelImpl implements _EventModel {
             (identical(other.organizerId, organizerId) ||
                 other.organizerId == organizerId) &&
             (identical(other.likes, likes) || other.likes == likes) &&
+            (identical(other.views, views) || other.views == views) &&
             (identical(other.isBookmarked, isBookmarked) ||
                 other.isBookmarked == isBookmarked));
   }
@@ -328,12 +389,15 @@ class _$EventModelImpl implements _EventModel {
     id,
     title,
     description,
-    date,
+    startDate,
+    endDate,
+    isAllDay,
     location,
     price,
     imageUrl,
     organizerId,
     likes,
+    views,
     isBookmarked,
   );
 
@@ -356,12 +420,15 @@ abstract class _EventModel implements EventModel {
     required final String id,
     required final String title,
     required final String description,
-    required final DateTime date,
+    required final DateTime startDate,
+    final DateTime? endDate,
+    final bool isAllDay,
     required final String location,
     required final double price,
     required final String imageUrl,
     required final String organizerId,
     final int likes,
+    final int views,
     final bool isBookmarked,
   }) = _$EventModelImpl;
 
@@ -375,7 +442,11 @@ abstract class _EventModel implements EventModel {
   @override
   String get description;
   @override
-  DateTime get date;
+  DateTime get startDate;
+  @override
+  DateTime? get endDate;
+  @override
+  bool get isAllDay;
   @override
   String get location;
   @override
@@ -386,6 +457,8 @@ abstract class _EventModel implements EventModel {
   String get organizerId;
   @override
   int get likes;
+  @override
+  int get views;
   @override
   bool get isBookmarked;
 

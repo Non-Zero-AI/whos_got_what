@@ -9,12 +9,15 @@ class EventModel with _$EventModel {
     required String id,
     required String title,
     required String description,
-    required DateTime date,
+    required DateTime startDate,
+    DateTime? endDate,
+    @Default(false) bool isAllDay,
     required String location,
     required double price,
     required String imageUrl,
     required String organizerId,
     @Default(0) int likes,
+    @Default(0) int views,
     @Default(false) bool isBookmarked,
   }) = _EventModel;
 

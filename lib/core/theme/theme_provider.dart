@@ -8,8 +8,8 @@ class ThemeState {
   final Color? accentColor;
 
   const ThemeState({
-    this.palette = AppPalette.matteLight,
-    this.mode = ThemeMode.system,
+    this.palette = AppPalette.matteDark,
+    this.mode = ThemeMode.dark,
     this.accentColor,
   });
 

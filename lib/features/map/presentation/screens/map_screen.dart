@@ -26,26 +26,45 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       body: eventsAsync.when(
         data: (events) {
-          final Set<Marker> markers = events.map((event) {
-            return Marker(
-              markerId: MarkerId(event.id),
-              position: _center, // TODO: Use actual event coordinates
-              infoWindow: InfoWindow(
-                title: event.title,
-                snippet: event.location,
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.map_outlined,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Map view coming soon',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'We need to finish configuring Google Maps for iOS before showing the interactive map here.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            );
-          }).toSet();
-
-          return GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _center,
-              zoom: 11.0,
             ),
-            markers: markers,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

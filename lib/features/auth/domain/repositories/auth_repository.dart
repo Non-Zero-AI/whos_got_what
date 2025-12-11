@@ -10,7 +10,6 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
-  Future<AuthResponse> signInAnonymously();
   Future<void> signOut();
   User? get currentUser;
 }
@@ -43,11 +42,6 @@ class SupabaseAuthRepository implements AuthRepository {
       email: email,
       password: password,
     );
-  }
-
-  @override
-  Future<AuthResponse> signInAnonymously() async {
-    return await _supabase.auth.signInAnonymously();
   }
 
   @override

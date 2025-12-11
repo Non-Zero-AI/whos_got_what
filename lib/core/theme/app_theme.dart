@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 enum AppPalette {
   matteLight,
@@ -13,16 +12,16 @@ class AppTheme {
   // --- Palette Definitions ---
 
   // 1. Matte Light
-  static const Color _lightBg = Color(0xFFE0E5EC);
-  static const Color _lightSurface = Color(0xFFF0F3F7);
-  static const Color _lightText = Color(0xFF4A5568);
-  static const Color _lightAccent = Color(0xFF667EEA);
+  static const Color _lightBg = Color(0xFFE6E9F0); // light counterpart of #3C424E
+  static const Color _lightSurface = Color(0xFFF3F5F9); // light counterpart of #607282
+  static const Color _lightText = Color(0xFF2C3440);
+  static const Color _lightAccent = Color(0xFF72808D);
 
   // 2. Matte Dark
-  static const Color _darkBg = Color(0xFF212529);
-  static const Color _darkSurface = Color(0xFF2D3238);
-  static const Color _darkText = Color(0xFFE2E8F0);
-  static const Color _darkAccent = Color(0xFF81E6D9);
+  static const Color _darkBg = Color(0xFF3C424E); // gradient start
+  static const Color _darkSurface = Color(0xFF607282); // gradient end
+  static const Color _darkText = Color(0xFFE6EDF5);
+  static const Color _darkAccent = Color(0xFF72808D);
 
   // 3. Luxury (Navy & Gold)
   static const Color _navyBg = Color(0xFF001F3F);
@@ -42,6 +41,8 @@ class AppTheme {
   static const Color _creamyText = Color(0xFFF5E8D8);
   static const Color _warmAccent = Color(0xFFDAA520);
 
+  static const Color _buttonBase = Color(0xFF444E5B);
+  static const Color _buttonHighlight = Color(0xFF72808D);
 
   static ThemeData getTheme({
     required AppPalette palette,
@@ -106,23 +107,49 @@ class AppTheme {
     required Color primary,
     required Color text,
   }) {
-    final baseTextTheme = GoogleFonts.interTextTheme(
-      brightness == Brightness.dark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
+    final baseTheme = brightness == Brightness.dark ? ThemeData.dark() : ThemeData.light();
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: brightness,
+      surface: surface,
+      onSurface: text,
+      background: bg,
+      onBackground: text,
+    );
+
+    final ButtonStyle matteButtonStyle = ButtonStyle(
+      backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return _buttonBase.withOpacity(0.4);
+        }
+        if (states.contains(WidgetState.pressed) || states.contains(WidgetState.hovered)) {
+          return _buttonHighlight;
+        }
+        return _buttonBase;
+      }),
+      foregroundColor: WidgetStateProperty.all<Color>(text),
+      overlayColor: WidgetStateProperty.all<Color>(_buttonHighlight.withOpacity(0.1)),
+      elevation: WidgetStateProperty.all<double>(0),
+      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+        const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      ),
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
+      fontFamily: 'Adamina',
       scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        brightness: brightness,
-        surface: surface,
-        onSurface: text,
-        background: bg,
-        onBackground: text,
-      ),
-      textTheme: baseTextTheme.apply(
+      colorScheme: colorScheme,
+      canvasColor: bg,
+      cardColor: surface,
+      textTheme: baseTheme.textTheme.apply(
         bodyColor: text,
         displayColor: text,
       ),
@@ -130,6 +157,16 @@ class AppTheme {
         backgroundColor: bg,
         foregroundColor: text,
         elevation: 0,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: matteButtonStyle),
+      filledButtonTheme: FilledButtonThemeData(style: matteButtonStyle),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: matteButtonStyle.copyWith(
+          backgroundColor: WidgetStateProperty.all<Color>(Colors.transparent),
+          side: WidgetStateProperty.all<BorderSide>(
+            BorderSide(color: _buttonHighlight.withOpacity(0.7)),
+          ),
+        ),
       ),
       // Add other global component overrides here as needed
     );

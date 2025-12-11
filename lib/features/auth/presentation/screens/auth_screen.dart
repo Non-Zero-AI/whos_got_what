@@ -23,7 +23,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
-      if (mounted) context.go('/home');
+      if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
@@ -40,21 +40,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Check your email for confirmation!')));
-    } on AuthException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInAnonymously() async {
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authRepositoryProvider).signInAnonymously();
-      if (mounted) context.go('/home');
+      if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
@@ -99,11 +85,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     TextButton(
                       onPressed: _signUp,
                       child: const Text('Sign Up'),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: _signInAnonymously,
-                      child: const Text('Continue as Guest'),
                     ),
                   ],
                 ),

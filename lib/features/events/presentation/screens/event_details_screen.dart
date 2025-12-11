@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:whos_got_what/features/events/data/event_repository_impl.dart';
+import 'package:whos_got_what/features/events/domain/models/event_model.dart';
 import 'package:whos_got_what/features/payment/services/payment_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -44,8 +45,8 @@ class EventDetailsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                         DateFormat('EEEE, MMMM d, y • h:mm a').format(event.date),
-                         style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                        _formatEventTimeRange(event),
+                        style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       Text(event.description, style: Theme.of(context).textTheme.bodyLarge),
@@ -87,4 +88,29 @@ class EventDetailsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _formatEventTimeRange(EventModel event) {
+  final start = event.startDate;
+  final end = event.endDate;
+
+  final dateFormatter = DateFormat('EEEE, MMMM d, y');
+  final timeFormatter = DateFormat('h:mm a');
+
+  if (event.isAllDay) {
+    return '${dateFormatter.format(start)} • All Day';
+  }
+
+  if (end == null) {
+    return '${dateFormatter.format(start)} • ${timeFormatter.format(start)}';
+  }
+
+  final sameDay = start.year == end.year && start.month == end.month && start.day == end.day;
+  if (sameDay) {
+    return '${dateFormatter.format(start)} • ${timeFormatter.format(start)}–${timeFormatter.format(end)}';
+  }
+
+  final shortDateFormatter = DateFormat('MMM d, y');
+  return '${shortDateFormatter.format(start)} ${timeFormatter.format(start)} – '
+      '${shortDateFormatter.format(end)} ${timeFormatter.format(end)}';
 }
