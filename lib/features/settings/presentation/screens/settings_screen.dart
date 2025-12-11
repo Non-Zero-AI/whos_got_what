@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/core/theme/theme_provider.dart';
@@ -172,6 +173,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _signOut() async {
+    final supabase = Supabase.instance.client;
+    await supabase.auth.signOut();
+
+    if (!mounted) return;
+
+    // Go back to the intro carousel; router redirect will handle auth state.
+    context.go('/intro');
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
@@ -207,6 +218,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _ColorOption(color: Colors.orange, selected: themeState.accentColor),
               _ColorOption(color: Colors.teal, selected: themeState.accentColor),
             ],
+          ),
+          const Divider(height: 32),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Log out'),
+            onTap: _signOut,
           ),
           const Divider(height: 32),
           const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),

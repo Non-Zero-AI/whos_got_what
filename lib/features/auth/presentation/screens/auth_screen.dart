@@ -15,17 +15,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter both email and password to sign in.')),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).signInWithEmailPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
+            email: email,
+            password: password,
           );
       if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (!mounted) return;
+      final msg = e.message.contains('Anonymous sign-ins are disabled')
+          ? 'Sign-in requires an email and password. Please fill in both fields.'
+          : e.message;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
     } finally {
@@ -33,16 +50,52 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    if (_isGoogleLoading) return;
+    setState(() => _isGoogleLoading = true);
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase.auth.signInWithOAuth(OAuthProvider.google);
+      // auth state + router will handle navigation after successful OAuth
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Google sign-in failed: ${e.message}')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
   Future<void> _signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter both email and password to sign up.')),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).signUpWithEmailPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
+            email: email,
+            password: password,
           );
       if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (!mounted) return;
+      final msg = e.message.contains('Anonymous sign-ins are disabled')
+          ? 'Sign-up requires an email and password. Please fill in both fields.'
+          : e.message;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
     } finally {
@@ -53,42 +106,75 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Auth')),
+      appBar: AppBar(title: const Text("Sign up to see Who's Got What")),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-              const SizedBox(height: 24),
-              if (_isLoading)
-                const CircularProgressIndicator()
-              else
-                Column(
-                  children: [
-                    FilledButton(
-                      onPressed: _signIn,
-                      child: const Text('Sign In'),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Create your account',
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+                  icon: _isGoogleLoading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.login),
+                  label: const Text('Continue with Google'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: const [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text('or use email'),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _signUp,
-                      child: const Text('Sign Up'),
-                    ),
+                    Expanded(child: Divider()),
                   ],
                 ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 24),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FilledButton(
+                        onPressed: _signIn,
+                        child: const Text('Sign In with email'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _signUp,
+                        child: const Text('Sign Up with email'),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -40,24 +40,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isLoggedIn) {
-        // While profile/completedWelcome is still loading, don't force redirects yet
-        if (profileAsync.isLoading) {
-          return null;
-        }
-
-        // After successful auth, if welcome not completed, send to welcome
-        if (!completedWelcome && state.uri.path != '/welcome') {
-          return '/welcome';
-        }
-
         // If welcome already completed, never show /welcome again
         if (completedWelcome && state.uri.path == '/welcome') {
-          return '/home';
-        }
-
-        // If already logged in and you somehow navigate to /onboarding
-        // (e.g. from the intro CTA with an existing session), send to home
-        if (state.uri.path == '/onboarding') {
           return '/home';
         }
       }

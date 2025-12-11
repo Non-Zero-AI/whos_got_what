@@ -40,7 +40,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
     _IntroPageData(
       imageUrl:
           'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80',
-      title: "Who's Got What?",
+      title: "Ready to see Who's Got What?",
       subtitle: 'Welcome to your community. See what\'s happening around you right now.',
     ),
   ];
@@ -133,8 +133,14 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: () => context.go('/onboarding'),
-                        child: const Text("Start seeing Who's Got What now!"),
+                        // Go directly to the Auth screen to create/sign into an account,
+                        // avoiding a second, redundant onboarding carousel.
+                        onPressed: () => context.go('/auth'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        child: const Text("Let\'s go!"),
                       ),
                     ),
                   ),
