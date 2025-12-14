@@ -8,23 +8,28 @@ class MyEventsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userEvents = ref.watch(userEventsProvider);
+    final userEventsAsync = ref.watch(userEventsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Events'),
       ),
-      body: userEvents.isEmpty
-          ? const Center(
-              child: Text('You have not created any events yet.'),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: userEvents.length,
-              itemBuilder: (context, index) {
-                return EventCard(event: userEvents[index]);
-              },
-            ),
+      body: userEventsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Error: $err')),
+        data: (events) {
+          if (events.isEmpty) {
+            return const Center(child: Text('You have not created any events yet.'));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              return EventCard(event: events[index]);
+            },
+          );
+        },
+      ),
     );
   }
 }

@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
+import 'package:whos_got_what/features/events/data/event_repository_impl.dart';
 import 'package:whos_got_what/features/events/data/user_events_provider.dart';
-import 'package:whos_got_what/features/events/domain/models/event_model.dart';
 
 class CreateEventScreen extends ConsumerStatefulWidget {
   const CreateEventScreen({super.key});
@@ -166,7 +166,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
 
     // Default image if user skips upload
     var imageUrl =
-        'https://images.unsplash.com/photo-1514525253440-b393452e2729?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+        'https://placehold.co/1000x800/png?text=Event';
 
     if (_selectedImageFile != null) {
       try {
@@ -182,25 +182,60 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
       }
     }
 
-    final event = EventModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text.trim(),
-      description: _descriptionController.text.trim(),
-      startDate: _startDate,
-      endDate: _isAllDay ? null : _endDate,
-      isAllDay: _isAllDay,
-      location: _locationController.text.trim(),
-      price: 0.0,
-      imageUrl: imageUrl,
-      organizerId: user.id,
-      views: 0,
-    );
+    final startTime = _startDate;
 
-    ref.read(userEventsProvider.notifier).add(event);
+    DateTime endTime;
+    if (_isAllDay) {
+      // Supabase schema requires end_time; for all-day treat as end-of-day.
+      endTime = DateTime(startTime.year, startTime.month, startTime.day, 23, 59);
+    } else {
+      endTime = _endDate ?? startTime.add(const Duration(hours: 1));
+    }
+
+    try {
+      final repo = ref.read(eventRepositoryProvider);
+      await repo.createEvent(
+        creatorId: user.id,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        startTime: startTime,
+        endTime: endTime,
+        isAllDay: _isAllDay,
+        imageUrl: imageUrl,
+        location: _locationController.text.trim(),
+        price: 0.0,
+        ticketUrl: _ticketUrlController.text.trim(),
+        linkUrl: _linkUrlController.text.trim(),
+      );
+
+      // Refresh feeds
+      ref.invalidate(eventsProvider);
+      ref.invalidate(userEventsProvider);
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      final msg = e.message.toLowerCase();
+      final isRls = msg.contains('row-level security') || msg.contains('rls') || msg.contains('permission');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isRls
+                ? 'Event not saved: your account is not permitted to create events yet.'
+                : 'Event save failed: ${e.message}',
+          ),
+        ),
+      );
+      return;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Event save failed: $e')),
+      );
+      return;
+    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Event saved to My Events.')),
+      const SnackBar(content: Text('Event saved.')),
     );
 
     Navigator.of(context).pop();
@@ -323,7 +358,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.5),
+                              color: Colors.black.withValues(alpha: 0.5),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(

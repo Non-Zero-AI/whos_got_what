@@ -18,7 +18,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
   final _pages = const [
     _IntroPageData(
       imageUrl:
-          'https://images.unsplash.com/photo-1514525253440-b393452e2729?auto=format&fit=crop&w=1000&q=80',
+          'https://placehold.co/1000x800/png?text=Who%27s+Got+What',
       title: 'Discover Events',
       subtitle:
           'Never miss out on local festivals, concerts, and community gatherings in your area',
@@ -174,6 +174,26 @@ class _IntroPage extends StatelessWidget {
         Image.network(
           data.imageUrl,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.grey.shade900,
+                    Colors.black,
+                  ],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                color: Colors.white.withValues(alpha: 0.7),
+                size: 56,
+              ),
+            );
+          },
         ),
         Container(
           decoration: BoxDecoration(

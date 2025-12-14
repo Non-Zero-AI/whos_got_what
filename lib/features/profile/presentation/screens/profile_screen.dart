@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
 import 'package:whos_got_what/features/events/data/user_events_provider.dart';
 import 'package:whos_got_what/features/events/domain/models/event_model.dart';
@@ -29,12 +30,13 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     final theme = Theme.of(context);
-    final userEvents = ref.watch(userEventsProvider);
+    final userEventsAsync = ref.watch(userEventsProvider);
     final profileAsync = ref.watch(profileControllerProvider);
 
     final profile = profileAsync.value;
     final displayName =
-        profile?.username ?? profile?.fullName ?? user.email?.split('@').first ?? 'User';
+        profile?.fullName ?? profile?.username ?? user.email?.split('@').first ?? 'User';
+    final handle = profile?.username ?? user.email?.split('@').first;
     final isPaid = profile?.role == 'paid';
 
     return DefaultTabController(
@@ -60,11 +62,11 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     // Banner + avatar + basic info
                     SizedBox(
-                      height: 190,
+                      height: 250,
                       child: Stack(
                         children: [
                           Container(
-                            height: 140,
+                            height: 150,
                             width: double.infinity,
                             decoration: BoxDecoration(
                               gradient: profile?.bannerUrl == null
@@ -87,8 +89,10 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                           Positioned(
                             left: 16,
-                            bottom: 16,
+                            right: 16,
+                            top: 166,
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 CircleAvatar(
                                   radius: 40,
@@ -100,43 +104,52 @@ class ProfileScreen extends ConsumerWidget {
                                       : null,
                                 ),
                                 const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      displayName,
-                                      style: theme.textTheme.titleLarge,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        displayName,
+                                        style: theme.textTheme.titleLarge,
+                                      ),
+                                      if (handle != null && handle.trim().isNotEmpty) ...[
+                                        const SizedBox(height: 2),
                                         Text(
-                                          isPaid ? 'Business Account' : 'Personal Account',
+                                          '@${handle.trim()}',
                                           style: theme.textTheme.bodySmall,
                                         ),
-                                        if (isPaid) ...[
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
+                                      ],
+                                      if (isPaid) ...[
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Business Account',
+                                              style: theme.textTheme.bodySmall,
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              'PAID',
-                                              style: theme.textTheme.labelSmall?.copyWith(
-                                                color: theme.colorScheme.primary,
-                                                fontWeight: FontWeight.w600,
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                'PAID',
+                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                  color: theme.colorScheme.primary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -152,34 +165,51 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.link),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.alternate_email),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.camera_alt_outlined),
-                                onPressed: () {},
-                              ),
+                              if (profile?.website != null && profile!.website!.trim().isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.link),
+                                  onPressed: () async {
+                                    final raw = profile.website!.trim();
+                                    final uri = Uri.tryParse(raw.startsWith('http') ? raw : 'https://$raw');
+                                    if (uri == null) return;
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  },
+                                ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            profile?.bio ??
-                                'Bio goes here. Tell people about your events, community, or business.',
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          if (profile?.bio != null && profile!.bio!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              profile.bio!,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ],
                           const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _StatChip(label: 'Active posts', value: userEvents.length.toString()),
-                              _StatChip(label: 'Archived', value: '0'),
-                              _StatChip(label: 'Views', value: _totalViews(userEvents).toString()),
-                            ],
+                          userEventsAsync.when(
+                            loading: () => Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                _StatChip(label: 'Active posts', value: '—'),
+                                _StatChip(label: 'Archived', value: '0'),
+                                _StatChip(label: 'Views', value: '—'),
+                              ],
+                            ),
+                            error: (_, __) => Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                _StatChip(label: 'Active posts', value: '—'),
+                                _StatChip(label: 'Archived', value: '0'),
+                                _StatChip(label: 'Views', value: '—'),
+                              ],
+                            ),
+                            data: (events) => Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _StatChip(label: 'Active posts', value: events.length.toString()),
+                                const _StatChip(label: 'Archived', value: '0'),
+                                _StatChip(label: 'Views', value: _totalViews(events).toString()),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -206,13 +236,20 @@ class ProfileScreen extends ConsumerWidget {
           body: TabBarView(
             children: [
               // Active
-              userEvents.isEmpty
-                  ? const Center(child: Text('No active posts yet.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: userEvents.length,
-                      itemBuilder: (context, index) => EventCard(event: userEvents[index]),
-                    ),
+              userEventsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, _) => Center(child: Text('Error: $err')),
+                data: (events) {
+                  if (events.isEmpty) {
+                    return const Center(child: Text('No active posts yet.'));
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: events.length,
+                    itemBuilder: (context, index) => EventCard(event: events[index]),
+                  );
+                },
+              ),
               // Archived
               const Center(child: Text('No archived posts.')),
               // Bookmarked
@@ -262,8 +299,7 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container
-(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,

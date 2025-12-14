@@ -25,6 +25,7 @@ alter table profiles add column if not exists bio text;
 alter table profiles add column if not exists website text;
 alter table profiles add column if not exists social_links jsonb default '{}'::jsonb;
 alter table profiles add column if not exists contact_info jsonb default '{}'::jsonb;
+alter table profiles add column if not exists completed_welcome boolean default false not null;
 
 
 -- EVENTS TABLE
@@ -42,6 +43,13 @@ create table if not exists events (
 
 -- Add share_count if not exists
 alter table events add column if not exists share_count int default 0 not null;
+
+-- Add app-used columns safely if they don't exist
+alter table events add column if not exists location text;
+alter table events add column if not exists price numeric default 0 not null;
+alter table events add column if not exists ticket_url text;
+alter table events add column if not exists link_url text;
+alter table events add column if not exists views int default 0 not null;
 
 
 -- BOOKMARKS TABLE

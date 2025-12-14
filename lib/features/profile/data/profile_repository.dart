@@ -103,12 +103,32 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<Profile> upsertProfile(Profile profile) async {
-    final Map<String, dynamic> response = await _supabase
-        .from('profiles')
-        .upsert(profile.toJson())
-        .select()
-        .single();
+    Map<String, dynamic> payload = profile.toJson();
 
-    return Profile.fromJson(response);
+    try {
+      final Map<String, dynamic> response = await _supabase
+          .from('profiles')
+          .upsert(payload)
+          .select()
+          .single();
+
+      return Profile.fromJson(response);
+    } on PostgrestException catch (e) {
+      // Best-effort compatibility if the remote schema is missing some columns.
+      final msg = e.message.toLowerCase();
+      final missingColumn = msg.contains('column') && msg.contains('does not exist');
+      if (!missingColumn) rethrow;
+
+      payload = Map<String, dynamic>.from(payload)
+        ..remove('completed_welcome');
+
+      final Map<String, dynamic> response = await _supabase
+          .from('profiles')
+          .upsert(payload)
+          .select()
+          .single();
+
+      return Profile.fromJson(response);
+    }
   }
 }

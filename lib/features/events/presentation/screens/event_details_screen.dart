@@ -13,15 +13,15 @@ class EventDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // In a real app, you'd fetch specific event by ID. 
-    // Here we just find it from the list for demo purposes.
-    final eventsAsync = ref.watch(eventsProvider);
+    final eventAsync = ref.watch(eventByIdProvider(eventId));
 
     return Scaffold(
-      body: eventsAsync.when(
-        data: (events) {
-          final event = events.firstWhere((e) => e.id == eventId, orElse: () => events.first);
-          
+      body: eventAsync.when(
+        data: (event) {
+          if (event == null) {
+            return const Center(child: Text('Event not found.'));
+          }
+
           return CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -34,6 +34,17 @@ class EventDetailsScreen extends ConsumerWidget {
                     child: Image.network(
                       event.imageUrl,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Theme.of(context).colorScheme.surface,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                      ),
                     ),
                   ),
                 ),
