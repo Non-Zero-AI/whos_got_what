@@ -40,175 +40,213 @@ class ProfileScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Profile'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => context.go('/profile/settings'),
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Active'),
-              Tab(text: 'Archived'),
-              Tab(text: 'Bookmarked'),
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                title: const Text('Profile'),
+                pinned: false,
+                floating: true,
+                snap: true,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => context.go('/profile/settings'),
+                  ),
+                ],
+              ),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    // Banner + avatar + basic info
+                    SizedBox(
+                      height: 190,
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              gradient: profile?.bannerUrl == null
+                                  ? LinearGradient(
+                                      colors: [
+                                        theme.colorScheme.surfaceContainerHighest,
+                                        theme.colorScheme.surface,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              image: profile?.bannerUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(profile!.bannerUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          Positioned(
+                            left: 16,
+                            bottom: 16,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 40,
+                                  backgroundImage: profile?.avatarUrl != null
+                                      ? NetworkImage(profile!.avatarUrl!)
+                                      : null,
+                                  child: profile?.avatarUrl == null
+                                      ? const Icon(Icons.person, size: 40)
+                                      : null,
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: theme.textTheme.titleLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          isPaid ? 'Business Account' : 'Personal Account',
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                        if (isPaid) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              'PAID',
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: theme.colorScheme.primary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Social links & stats
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.link),
+                                onPressed: () {},
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.alternate_email),
+                                onPressed: () {},
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.camera_alt_outlined),
+                                onPressed: () {},
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            profile?.bio ??
+                                'Bio goes here. Tell people about your events, community, or business.',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _StatChip(label: 'Active posts', value: userEvents.length.toString()),
+                              _StatChip(label: 'Archived', value: '0'),
+                              _StatChip(label: 'Views', value: _totalViews(userEvents).toString()),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SliverPersistentHeader(
+                delegate: _SliverAppBarDelegate(
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Active'),
+                      Tab(text: 'Archived'),
+                      Tab(text: 'Bookmarked'),
+                    ],
+                  ),
+                  theme.colorScheme.surface,
+                ),
+                pinned: true,
+              ),
+            ];
+          },
+          body: TabBarView(
+            children: [
+              // Active
+              userEvents.isEmpty
+                  ? const Center(child: Text('No active posts yet.'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: userEvents.length,
+                      itemBuilder: (context, index) => EventCard(event: userEvents[index]),
+                    ),
+              // Archived
+              const Center(child: Text('No archived posts.')),
+              // Bookmarked
+              const Center(child: Text('No bookmarked posts yet.')),
             ],
           ),
         ),
-        body: Column(
-          children: [
-            // Banner + avatar + basic info
-            SizedBox(
-              height: 190,
-              child: Stack(
-                children: [
-                  Container(
-                    height: 140,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: profile?.bannerUrl == null
-                          ? LinearGradient(
-                              colors: [
-                                theme.colorScheme.surfaceVariant,
-                                theme.colorScheme.surface,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      image: profile?.bannerUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(profile!.bannerUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                  ),
-                  Positioned(
-                    left: 16,
-                    bottom: 16,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: profile?.avatarUrl != null
-                              ? NetworkImage(profile!.avatarUrl!)
-                              : null,
-                          child: profile?.avatarUrl == null
-                              ? const Icon(Icons.person, size: 40)
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              displayName,
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  isPaid ? 'Business Account' : 'Personal Account',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                if (isPaid) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'PAID',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Social links & stats
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.link),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.alternate_email),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.camera_alt_outlined),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    profile?.bio ??
-                        'Bio goes here. Tell people about your events, community, or business.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _StatChip(label: 'Active posts', value: userEvents.length.toString()),
-                      _StatChip(label: 'Archived', value: '0'),
-                      _StatChip(label: 'Views', value: _totalViews(userEvents).toString()),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // Active
-                  userEvents.isEmpty
-                      ? const Center(child: Text('No active posts yet.'))
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: userEvents.length,
-                          itemBuilder: (context, index) => EventCard(event: userEvents[index]),
-                        ),
-                  // Archived
-                  const Center(child: Text('No archived posts.')),
-                  // Bookmarked
-                  const Center(child: Text('No bookmarked posts yet.')),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+  final Color _backgroundColor;
+
+  _SliverAppBarDelegate(this._tabBar, this._backgroundColor);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: _backgroundColor,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }
 
@@ -228,7 +266,7 @@ class _StatChip extends StatelessWidget {
 (
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

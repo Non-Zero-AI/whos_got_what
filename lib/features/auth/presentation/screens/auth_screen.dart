@@ -5,7 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
-  const AuthScreen({super.key});
+  final bool isLoginMode;
+
+  const AuthScreen({
+    super.key,
+    this.isLoginMode = false,
+  });
 
   @override
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
@@ -16,6 +21,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  late bool _isLoginMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoginMode = widget.isLoginMode;
+  }
 
   Future<void> _signIn() async {
     final email = _emailController.text.trim();
@@ -83,6 +95,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
+    // Basic email validation regex
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid email address.')),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).signUpWithEmailPassword(
@@ -106,7 +129,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign up to see Who's Got What")),
+      appBar: AppBar(
+        title: Text(_isLoginMode ? 'Log in to Who\'s Got What' : 'Sign up to see Who\'s Got What'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -116,7 +141,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Create your account',
+                  _isLoginMode ? 'Welcome back' : 'Create your account',
                   style: Theme.of(context).textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
@@ -158,21 +183,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 24),
                 if (_isLoading)
                   const Center(child: CircularProgressIndicator())
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      FilledButton(
-                        onPressed: _signIn,
-                        child: const Text('Sign In with email'),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _signUp,
-                        child: const Text('Sign Up with email'),
-                      ),
-                    ],
+                else ...[
+                  FilledButton(
+                    onPressed: _isLoginMode ? _signIn : _signUp,
+                    child: Text(_isLoginMode ? 'Log in' : 'Create account'),
                   ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isLoginMode = !_isLoginMode;
+                      });
+                    },
+                    child: Text(
+                      _isLoginMode
+                          ? "Don't have an account? Sign up"
+                          : 'Already have an account? Log in',
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

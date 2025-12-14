@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/profile/data/profile_providers.dart';
 import 'package:whos_got_what/features/profile/data/profile_repository.dart';
@@ -21,6 +23,7 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
   bool _savingUsername = false;
   bool _savingAvatar = false;
   bool _requestingLocation = false;
+  File? _avatarFile;
 
   @override
   void dispose() {
@@ -38,7 +41,14 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
       if (profile == null) {
         // We need the current user id from Supabase
         final supabaseUser = Supabase.instance.client.auth.currentUser;
-        if (supabaseUser == null) return;
+        if (supabaseUser == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error: No authenticated user found. Please try logging in again.')),
+            );
+          }
+          return;
+        }
         final newProfile = Profile(
           id: supabaseUser.id,
           username: _usernameController.text.trim(),
@@ -61,6 +71,12 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
       // Refresh the cached profile for future reads
       ref.invalidate(profileControllerProvider);
       _goToStep(1);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _savingUsername = false);
     }
@@ -73,6 +89,67 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+
+  void _goBack() {
+    if (_step > 0) {
+      _goToStep(_step - 1);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _avatarFile = File(pickedFile.path));
+    }
+  }
+
+  Future<void> _saveAvatarAndContinue() async {
+    if (_avatarFile == null) {
+      _goToStep(2);
+      return;
+    }
+
+    setState(() => _savingAvatar = true);
+    try {
+      final supabaseUser = Supabase.instance.client.auth.currentUser;
+      if (supabaseUser == null) return;
+
+      final fileExt = _avatarFile!.path.split('.').last;
+      final fileName = '${supabaseUser.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      
+      try {
+        await Supabase.instance.client.storage
+            .from('avatars')
+            .upload(fileName, _avatarFile!, fileOptions: const FileOptions(upsert: true));
+        
+        final imageUrl = Supabase.instance.client.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+        final repo = ref.read(profileRepositoryProvider);
+        final profile = ref.read(profileControllerProvider).value;
+        if (profile != null) {
+          final updated = profile.copyWith(avatarUrl: imageUrl);
+          await repo.upsertProfile(updated);
+          ref.invalidate(profileControllerProvider);
+        }
+      } catch (storageError) {
+        debugPrint('Storage error (might be missing bucket): $storageError');
+        // Continue anyway
+      }
+      
+      _goToStep(2);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving avatar: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingAvatar = false);
+    }
   }
 
   Future<void> _completeWelcomeAndGoHome() async {
@@ -131,11 +208,15 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
             ),
             _AvatarStep(
               saving: _savingAvatar,
+              selectedImage: _avatarFile,
+              onPickImage: _pickImage,
+              onBack: _goBack,
               onSkip: () => _goToStep(2),
-              onDone: () => _goToStep(2),
+              onDone: _saveAvatarAndContinue,
             ),
             _LocationStep(
               requesting: _requestingLocation,
+              onBack: _goBack,
               onAllow: _requestLocation,
               onSkip: _completeWelcomeAndGoHome,
             ),
@@ -202,43 +283,84 @@ class _UsernameStep extends StatelessWidget {
 
 class _AvatarStep extends StatelessWidget {
   final bool saving;
+  final File? selectedImage;
+  final VoidCallback onPickImage;
+  final VoidCallback onBack;
   final VoidCallback onSkip;
   final VoidCallback onDone;
 
   const _AvatarStep({
     required this.saving,
+    this.selectedImage,
+    required this.onPickImage,
+    required this.onBack,
     required this.onSkip,
     required this.onDone,
   });
 
   @override
   Widget build(BuildContext context) {
-    // For now, reuse the Settings screen for avatar editing; user can skip here.
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 32),
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: onBack,
+            padding: EdgeInsets.zero,
+            alignment: Alignment.centerLeft,
+          ),
+          const SizedBox(height: 16),
           const Text(
             'Add some style to your account',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 32),
+          Center(
+            child: GestureDetector(
+              onTap: onPickImage,
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: selectedImage != null ? FileImage(selectedImage!) : null,
+                    child: selectedImage == null
+                        ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.blue, // Theme color
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          const Text('You can add a profile image now, or skip and do this later in Settings.'),
+          const Center(child: Text('Tap to choose a photo')),
           const Spacer(),
-          Row(
-            children: [
-              TextButton(
-                onPressed: onSkip,
-                child: const Text('Skip'),
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: saving ? null : onDone,
-                child: const Text('Continue'),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: saving ? null : onDone,
+              child: saving
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(selectedImage != null ? 'Continue' : 'Skip for now'),
+            ),
           ),
           const SizedBox(height: 16),
         ],
@@ -249,11 +371,13 @@ class _AvatarStep extends StatelessWidget {
 
 class _LocationStep extends StatelessWidget {
   final bool requesting;
+  final VoidCallback onBack;
   final VoidCallback onAllow;
   final VoidCallback onSkip;
 
   const _LocationStep({
     required this.requesting,
+    required this.onBack,
     required this.onAllow,
     required this.onSkip,
   });
@@ -265,7 +389,13 @@ class _LocationStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 32),
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: onBack,
+            padding: EdgeInsets.zero,
+            alignment: Alignment.centerLeft,
+          ),
+          const SizedBox(height: 16),
           const Text(
             "Allow location access",
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),

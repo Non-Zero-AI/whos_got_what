@@ -35,7 +35,7 @@ class _RaisedButtonState extends State<RaisedButton> {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        colorScheme.primary.withOpacity(0.8),
+        colorScheme.primary.withValues(alpha: 0.8),
         colorScheme.primary,
       ],
     );
@@ -59,13 +59,13 @@ class _RaisedButtonState extends State<RaisedButton> {
               ? [] // No shadow (or inner shadow) when pressed
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     offset: const Offset(4, 4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     offset: const Offset(-4, -4),
                     blurRadius: 10,
                     spreadRadius: 1,

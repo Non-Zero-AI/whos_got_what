@@ -37,12 +37,12 @@ class MatteCard extends StatelessWidget {
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(10, 10),
             blurRadius: 20,
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             offset: const Offset(-5, -5),
             blurRadius: 10,
           ),

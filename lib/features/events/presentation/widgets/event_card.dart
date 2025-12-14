@@ -43,7 +43,7 @@ class EventCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.broken_image_outlined,
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -95,14 +95,14 @@ class EventCard extends StatelessWidget {
                       Icon(
                         Icons.location_on_outlined,
                         size: 16,
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           event.location,
                           style: GoogleFonts.inter(
-                            color: colorScheme.onSurface.withOpacity(0.7),
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                           maxLines: 1,
@@ -116,7 +116,7 @@ class EventCard extends StatelessWidget {
                   Text(
                     event.description,
                     style: GoogleFonts.inter(
-                      color: colorScheme.onSurface.withOpacity(0.8),
+                      color: colorScheme.onSurface.withValues(alpha: 0.8),
                       fontSize: 13,
                       height: 1.4,
                     ),
@@ -130,13 +130,13 @@ class EventCard extends StatelessWidget {
                       Icon(
                         Icons.visibility_outlined,
                         size: 16,
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${event.views} views',
                         style: GoogleFonts.inter(
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
                       ),
@@ -144,13 +144,13 @@ class EventCard extends StatelessWidget {
                       Icon(
                         Icons.push_pin_outlined,
                         size: 16,
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Check-in',
                         style: GoogleFonts.inter(
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
                       ),

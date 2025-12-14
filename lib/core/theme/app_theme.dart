@@ -1,3 +1,4 @@
+// ignore_for_file: unused_field
 import 'package:flutter/material.dart';
 
 enum AppPalette {
@@ -12,14 +13,15 @@ class AppTheme {
   // --- Palette Definitions ---
 
   // 1. Matte Light
-  static const Color _lightBg = Color(0xFFE6E9F0); // light counterpart of #3C424E
-  static const Color _lightSurface = Color(0xFFF3F5F9); // light counterpart of #607282
+  static const Color _lightBg = Color(0xFFFEFAE0); // Cream / Matcha Light
+  static const Color _lightSurface = Color(0xFFFFFBF0); // Slightly lighter for cards
   static const Color _lightText = Color(0xFF2C3440);
   static const Color _lightAccent = Color(0xFF72808D);
 
   // 2. Matte Dark
-  static const Color _darkBg = Color(0xFF3C424E); // gradient start
-  static const Color _darkSurface = Color(0xFF607282); // gradient end
+  static const Color _darkBg = Color(0xFF171417); // Darkest part of gradient
+  static const Color _darkBgLight = Color(0xFF221E22); // Lightest part of gradient
+  static const Color _darkSurface = Color(0xFF2A2A2A); // Updated surface for better contrast
   static const Color _darkText = Color(0xFFE6EDF5);
   static const Color _darkAccent = Color(0xFF72808D);
 
@@ -44,60 +46,38 @@ class AppTheme {
   static const Color _buttonBase = Color(0xFF444E5B);
   static const Color _buttonHighlight = Color(0xFF72808D);
 
+  static const Color lightBg = _lightBg;
+  static const Color darkGradientStart = _darkBg;
+  static const Color darkGradientEnd = _darkBgLight;
+
   static ThemeData getTheme({
     required AppPalette palette,
     required ThemeMode mode,
     Color? accentColor,
   }) {
-    // If we want detailed mapping:
-    // We can say if mode == dark, force a dark palette if 'palette' is matteLight.
-    // Or we simply respect 'palette' as the source of truth for high-level "scheme".
-    // For now, let's just use the palette as the base, and allow accent override.
-
     final Color? overrideAccent = accentColor;
+    final bool isLight = mode == ThemeMode.light;
 
-    switch (palette) {
-      case AppPalette.matteLight:
-        return _buildTheme(
-          brightness: Brightness.light,
-          bg: _lightBg,
-          surface: _lightSurface,
-          primary: overrideAccent ?? _lightAccent,
-          text: _lightText,
-        );
-      case AppPalette.matteDark:
-        return _buildTheme(
-          brightness: Brightness.dark,
-          bg: _darkBg,
-          surface: _darkSurface,
-          primary: overrideAccent ?? _darkAccent,
-          text: _darkText,
-        );
-      case AppPalette.luxury:
-        return _buildTheme(
-          brightness: Brightness.dark,
-          bg: _navyBg,
-          surface: _navySurface,
-          primary: overrideAccent ?? _goldAccent,
-          text: _luxuryText,
-        );
-      case AppPalette.clean:
-        return _buildTheme(
-          brightness: Brightness.light,
-          bg: _cleanBg,
-          surface: _cleanSurface,
-          primary: overrideAccent ?? _cleanAccent,
-          text: _cleanText,
-        );
-      case AppPalette.creamyDark:
-        return _buildTheme(
-          brightness: Brightness.dark,
-          bg: _creamyBg,
-          surface: _creamySurface,
-          primary: overrideAccent ?? _warmAccent,
-          text: _creamyText,
-        );
+    if (isLight) {
+      // Force Light Theme (Cream/Matte Light) if mode is Light
+      return _buildTheme(
+        brightness: Brightness.light,
+        bg: _lightBg,
+        surface: _lightSurface,
+        primary: overrideAccent ?? _lightAccent,
+        text: _lightText,
+      );
     }
+
+    // Otherwise use Dark Theme (Default to Matte Dark logic or respect palette if it's a dark one)
+    // Since only Matte Dark is default, we return that.
+    return _buildTheme(
+      brightness: Brightness.dark,
+      bg: _darkBg,
+      surface: _darkSurface,
+      primary: overrideAccent ?? _darkAccent,
+      text: _darkText,
+    );
   }
 
   static ThemeData _buildTheme({
@@ -114,14 +94,12 @@ class AppTheme {
       brightness: brightness,
       surface: surface,
       onSurface: text,
-      background: bg,
-      onBackground: text,
     );
 
     final ButtonStyle matteButtonStyle = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
         if (states.contains(WidgetState.disabled)) {
-          return _buttonBase.withOpacity(0.4);
+          return _buttonBase.withValues(alpha: 0.4);
         }
         if (states.contains(WidgetState.pressed) || states.contains(WidgetState.hovered)) {
           return _buttonHighlight;
@@ -129,7 +107,7 @@ class AppTheme {
         return _buttonBase;
       }),
       foregroundColor: WidgetStateProperty.all<Color>(text),
-      overlayColor: WidgetStateProperty.all<Color>(_buttonHighlight.withOpacity(0.1)),
+      overlayColor: WidgetStateProperty.all<Color>(_buttonHighlight.withValues(alpha: 0.1)),
       elevation: WidgetStateProperty.all<double>(0),
       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
         RoundedRectangleBorder(
@@ -145,7 +123,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       fontFamily: 'Adamina',
-      scaffoldBackgroundColor: bg,
+      scaffoldBackgroundColor: Colors.transparent,
       colorScheme: colorScheme,
       canvasColor: bg,
       cardColor: surface,
@@ -154,7 +132,7 @@ class AppTheme {
         displayColor: text,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: bg,
+        backgroundColor: Colors.transparent,
         foregroundColor: text,
         elevation: 0,
       ),
@@ -164,7 +142,7 @@ class AppTheme {
         style: matteButtonStyle.copyWith(
           backgroundColor: WidgetStateProperty.all<Color>(Colors.transparent),
           side: WidgetStateProperty.all<BorderSide>(
-            BorderSide(color: _buttonHighlight.withOpacity(0.7)),
+            BorderSide(color: _buttonHighlight.withValues(alpha: 0.7)),
           ),
         ),
       ),

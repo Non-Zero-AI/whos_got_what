@@ -11,44 +11,77 @@ import 'package:whos_got_what/features/onboarding/presentation/screens/onboardin
 import 'package:whos_got_what/features/onboarding/presentation/screens/welcome_onboarding_screen.dart';
 import 'package:whos_got_what/features/onboarding/presentation/screens/intro_carousel_screen.dart';
 import 'package:whos_got_what/features/profile/presentation/screens/profile_screen.dart';
+import 'package:whos_got_what/features/splash/presentation/screens/splash_screen.dart';
 import 'package:whos_got_what/features/profile/presentation/screens/my_events_screen.dart';
 import 'package:whos_got_what/features/settings/presentation/screens/settings_screen.dart';
 import 'package:whos_got_what/shared/widgets/scaffold_with_navbar.dart';
 import 'package:whos_got_what/features/design_system_demo/design_system_demo_screen.dart';
 import 'package:whos_got_what/features/profile/data/profile_providers.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:whos_got_what/features/profile/data/profile_repository.dart'; // For Profile type
+
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<AuthState>>(
+      authStateProvider,
+      (_, __) => notifyListeners(),
+    );
+    _ref.listen<AsyncValue<Profile?>>(
+      profileControllerProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) => RouterNotifier(ref));
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final notifier = ref.watch(routerNotifierProvider);
   
   return GoRouter(
-    initialLocation: '/intro',
+    refreshListenable: notifier,
+    initialLocation: '/splash',
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final isLoggedIn = authState.value?.session?.user != null;
-      final isAuthRoute =
-          state.uri.path == '/auth' || state.uri.path == '/onboarding' || state.uri.path == '/welcome';
+      final authState = ref.read(authStateProvider);
+      // Wait for auth to initialize
+      if (authState.isLoading || !authState.hasValue) return null;
+
+      final currentUser = ref.read(currentUserProvider);
+      final isLoggedIn = currentUser != null;
+      final path = state.uri.path;
+      final isPublicOnboardingRoute = path == '/splash' || path == '/intro' || path == '/onboarding' || path == '/auth' || path == '/welcome';
 
       final profileAsync = ref.read(profileControllerProvider);
       final profile = profileAsync.value;
       final completedWelcome = profile?.completedWelcome ?? false;
 
-      if (authState.isLoading) return null; // Wait for loading
-
-      // Unauthenticated users should only see intro/auth/onboarding/welcome
-      if (!isLoggedIn && !isAuthRoute) {
-        return '/intro';
+      // Unauthenticated users should only see intro/auth/onboarding/welcome/splash
+      if (!isLoggedIn && !isPublicOnboardingRoute) {
+        return '/splash';
       }
 
       if (isLoggedIn) {
-        // If welcome already completed, never show /welcome again
-        if (completedWelcome && state.uri.path == '/welcome') {
+        // If welcome already completed, never show splash/intro/welcome again -> Go Home
+        if (completedWelcome && isPublicOnboardingRoute) {
           return '/home';
         }
+        
+        // If welcome NOT completed, do not redirect if they are on a public route.
+        // This prevents bumping them back to /splash if they are navigating to /welcome.
+        // And if they specifically navigate to /welcome (via context.go), this redirect returns null (allowed).
       }
 
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/intro',
         builder: (context, state) => const IntroCarouselScreen(),
@@ -59,7 +92,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => const AuthScreen(),
+        builder: (context, state) {
+          final isLoginMode = state.extra is bool ? state.extra as bool : false;
+          return AuthScreen(isLoginMode: isLoginMode);
+        },
       ),
       GoRoute(
         path: '/welcome',

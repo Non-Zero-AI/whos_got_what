@@ -47,7 +47,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
 
   @override
   void initState() {
-  super.initState();
+    super.initState();
     _startAutoScroll();
   }
 
@@ -55,14 +55,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted) return;
-      int nextPage = _currentPage + 1;
-      if (nextPage >= _pages.length) {
-        // Stop auto-scrolling on the last page
-        _timer?.cancel();
-        return;
-      }
-      _pageController.animateToPage(
-        nextPage,
+      _pageController.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
@@ -83,22 +76,21 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
         children: [
           PageView.builder(
             controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-              if (index < _pages.length - 1) {
-                _startAutoScroll();
-              } else {
-                _timer?.cancel();
-              }
-            },
+            // Infinite scroll
             itemBuilder: (context, index) {
-              final page = _pages[index];
-              final isLast = index == _pages.length - 1;
+              final pageIndex = index % _pages.length;
+              final page = _pages[pageIndex];
               return _IntroPage(
                 data: page,
-                showCta: isLast,
+                // CTA is now floating above, so specific page CTA logic is removed or ignored
+                showCta: false, 
               );
+            },
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+              // Restart timer on user interaction if needed, or keep it running?
+              // Usually pause on touch, but here we just reset.
+              _startAutoScroll();
             },
           ),
           Positioned(
@@ -112,38 +104,38 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     _pages.length,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 8,
-                      width: _currentPage == index ? 24 : 8,
-                      decoration: BoxDecoration(
-                        color: _currentPage == index
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
+                    (index) {
+                      final isActive = (_currentPage % _pages.length) == index;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 8,
+                        width: isActive ? 24 : 8,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_currentPage == _pages.length - 1)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        // Go directly to the Auth screen to create/sign into an account,
-                        // avoiding a second, redundant onboarding carousel.
-                        onPressed: () => context.go('/auth'),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(44),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                        child: const Text("Let\'s go!"),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => context.go('/onboarding'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
+                      child: const Text("Let's go!"),
                     ),
                   ),
+                ),
               ],
             ),
           ),
@@ -189,8 +181,8 @@ class _IntroPage extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.2),
-                Colors.black.withOpacity(0.6),
+                Colors.black.withValues(alpha: 0.2),
+                Colors.black.withValues(alpha: 0.6),
               ],
             ),
           ),
@@ -213,7 +205,7 @@ class _IntroPage extends StatelessWidget {
                 Text(
                   data.subtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                 ),
                 const SizedBox(height: 80),

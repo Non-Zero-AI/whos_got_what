@@ -327,7 +327,7 @@ class _ColorOption extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSelected = selected != null && color.value == selected!.value;
+    final isSelected = selected != null && color == selected;
     return GestureDetector(
       onTap: () => ref.read(themeProvider.notifier).setAccentColor(color),
       child: Container(

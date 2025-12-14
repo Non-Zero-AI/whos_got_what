@@ -34,6 +34,41 @@ class WhosGotWhatApp extends ConsumerWidget {
       ),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Stack(
+          children: [
+            // Global Background
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? null : AppTheme.lightBg,
+                gradient: isDark
+                    ? const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.darkGradientStart,
+                          AppTheme.darkGradientEnd,
+                        ],
+                      )
+                    : null,
+              ),
+            ),
+            // Noise Overlay
+            // Positioned.fill(
+            //   child: Image.asset(
+            //     'assets/images/noise.png',
+            //     repeat: ImageRepeat.repeat,
+            //     fit: BoxFit.none,
+            //   ),
+            // ),
+            // App Content
+            if (child != null) child,
+          ],
+        );
+      },
     );
   }
 }

@@ -91,24 +91,24 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<Profile?> getProfile(String userId) async {
-    final response = await _supabase
+    final Map<String, dynamic>? response = await _supabase
         .from('profiles')
         .select()
         .eq('id', userId)
         .maybeSingle();
 
     if (response == null) return null;
-    return Profile.fromJson(response as Map<String, dynamic>);
+    return Profile.fromJson(response);
   }
 
   @override
   Future<Profile> upsertProfile(Profile profile) async {
-    final response = await _supabase
+    final Map<String, dynamic> response = await _supabase
         .from('profiles')
         .upsert(profile.toJson())
         .select()
         .single();
 
-    return Profile.fromJson(response as Map<String, dynamic>);
+    return Profile.fromJson(response);
   }
 }

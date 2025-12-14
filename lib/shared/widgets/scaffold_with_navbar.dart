@@ -20,7 +20,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         width: 64,
         height: 64,
         child: FloatingActionButton(
-          onPressed: () => context.go('/events/create'),
+          onPressed: () => context.push('/events/create'),
           backgroundColor: colorScheme.primary,
           elevation: 6,
           shape: const CircleBorder(),
@@ -101,7 +101,7 @@ class _NavItem extends StatelessWidget {
     final theme = Theme.of(context);
     final bool selected = index == currentIndex;
     final Color activeColor = theme.colorScheme.primary;
-    final Color inactiveColor = theme.colorScheme.onSurface.withOpacity(0.7);
+    final Color inactiveColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     return InkWell(
       onTap: onTap,

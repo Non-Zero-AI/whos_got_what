@@ -11,12 +11,12 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
-  late GoogleMapController mapController;
+  GoogleMapController? mapController;
 
-  final LatLng _center = const LatLng(37.7749, -122.4194); // SF Default
-
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  @override
+  void dispose() {
+    mapController?.dispose();
+    super.dispose();
   }
 
   @override
