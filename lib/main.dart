@@ -40,31 +40,30 @@ class WhosGotWhatApp extends ConsumerWidget {
 
         return Stack(
           children: [
-            // Global Background
+            // Layer 1: Diagonal Gradient Background (top-left → bottom-right, 135°)
             Container(
               decoration: BoxDecoration(
-                color: isDark ? null : AppTheme.lightBg,
-                gradient: isDark
-                    ? const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.darkGradientStart,
-                          AppTheme.darkGradientEnd,
-                        ],
-                      )
-                    : null,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? AppTheme.darkGradientColors
+                      : AppTheme.lightGradientColors,
+                ),
               ),
             ),
-            // Noise Overlay
-            // Positioned.fill(
-            //   child: Image.asset(
-            //     'assets/images/noise.png',
-            //     repeat: ImageRepeat.repeat,
-            //     fit: BoxFit.none,
-            //   ),
-            // ),
-            // App Content
+            // Layer 2: Noise Texture Overlay
+            Positioned.fill(
+              child: Opacity(
+                opacity: isDark ? 0.04 : 0.03, // Dark: 0.03-0.05, Light: 0.02-0.04
+                child: Image.asset(
+                  'assets/images/noise.png',
+                  repeat: ImageRepeat.repeat,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            // Layer 3: App Content
             if (child != null) child,
           ],
         );

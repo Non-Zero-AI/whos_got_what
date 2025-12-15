@@ -1,27 +1,30 @@
 // ignore_for_file: unused_field
 import 'package:flutter/material.dart';
 
-enum AppPalette {
-  matteLight,
-  matteDark,
-  luxury,
-  clean,
-  creamyDark,
-}
+enum AppPalette { matteLight, matteDark, luxury, clean, creamyDark }
 
 class AppTheme {
   // --- Palette Definitions ---
 
-  // 1. Matte Light
-  static const Color _lightBg = Color(0xFFFEFAE0); // Cream / Matcha Light
-  static const Color _lightSurface = Color(0xFFFFFBF0); // Slightly lighter for cards
+  // 1. Matte Light (Textile Neomorphic Standard)
+  // Light theme gradient: top-left → bottom-right (135°)
+  static const Color _lightBgTop = Color(0xFFF4F5F7); // Light stop (top-left)
+  static const Color _lightBgMid = Color(0xFFECEDEF); // Mid stop
+  static const Color _lightBgBottom = Color(
+    0xFFE2E3E6,
+  ); // Dark stop (bottom-right)
+  static const Color _lightSurface = Color(0xFFECEDEF); // Surface for cards
   static const Color _lightText = Color(0xFF2C3440);
   static const Color _lightAccent = Color(0xFF72808D);
 
-  // 2. Matte Dark
-  static const Color _darkBg = Color(0xFF171417); // Darkest part of gradient
-  static const Color _darkBgLight = Color(0xFF221E22); // Lightest part of gradient
-  static const Color _darkSurface = Color(0xFF2A2A2A); // Updated surface for better contrast
+  // 2. Matte Dark (Textile Neomorphic Standard)
+  // Dark theme gradient: top-left → bottom-right (135°)
+  static const Color _darkBgTop = Color(0xFF1C1C1E); // Light stop (top-left)
+  static const Color _darkBgMid = Color(0xFF161618); // Mid stop
+  static const Color _darkBgBottom = Color(
+    0xFF0F0F12,
+  ); // Dark stop (bottom-right)
+  static const Color _darkSurface = Color(0xFF161618); // Surface for cards
   static const Color _darkText = Color(0xFFE6EDF5);
   static const Color _darkAccent = Color(0xFF72808D);
 
@@ -46,9 +49,66 @@ class AppTheme {
   static const Color _buttonBase = Color(0xFF444E5B);
   static const Color _buttonHighlight = Color(0xFF72808D);
 
-  static const Color lightBg = _lightBg;
-  static const Color darkGradientStart = _darkBg;
-  static const Color darkGradientEnd = _darkBgLight;
+  // Gradient color getters for background system
+  static List<Color> get lightGradientColors => [
+    _lightBgTop,
+    _lightBgMid,
+    _lightBgBottom,
+  ];
+
+  static List<Color> get darkGradientColors => [
+    _darkBgTop,
+    _darkBgMid,
+    _darkBgBottom,
+  ];
+
+  // Legacy support (using mid color as single bg for theme canvasColor)
+  static const Color lightBg = _lightBgMid;
+  static const Color darkBg = _darkBgMid;
+
+  /// Builds the standard textile neomorphic background following the three-layer Stack pattern:
+  /// 1. Diagonal gradient (top-left → bottom-right, 135°)
+  /// 2. Noise texture overlay
+  /// 3. Content layer
+  ///
+  /// This method can be used in screens that need custom background implementations.
+  static Widget buildBackground({
+    required BuildContext context,
+    required Widget child,
+    double? noiseOpacity,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final opacity = noiseOpacity ?? (isDark ? 0.04 : 0.03);
+
+    return Stack(
+      children: [
+        // Layer 1: Diagonal Gradient Background
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark ? darkGradientColors : lightGradientColors,
+            ),
+          ),
+        ),
+        // Layer 2: Noise Texture Overlay
+        Positioned.fill(
+          child: Opacity(
+            opacity: opacity,
+            child: Image.asset(
+              'assets/images/noise.png',
+              repeat: ImageRepeat.repeat,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        // Layer 3: Content
+        child,
+      ],
+    );
+  }
 
   static ThemeData getTheme({
     required AppPalette palette,
@@ -59,21 +119,20 @@ class AppTheme {
     final bool isLight = mode == ThemeMode.light;
 
     if (isLight) {
-      // Force Light Theme (Cream/Matte Light) if mode is Light
+      // Light Theme (Textile Neomorphic Standard)
       return _buildTheme(
         brightness: Brightness.light,
-        bg: _lightBg,
+        bg: _lightBgMid, // Use mid color for canvasColor (fallback)
         surface: _lightSurface,
         primary: overrideAccent ?? _lightAccent,
         text: _lightText,
       );
     }
 
-    // Otherwise use Dark Theme (Default to Matte Dark logic or respect palette if it's a dark one)
-    // Since only Matte Dark is default, we return that.
+    // Dark Theme (Textile Neomorphic Standard)
     return _buildTheme(
       brightness: Brightness.dark,
-      bg: _darkBg,
+      bg: _darkBgMid, // Use mid color for canvasColor (fallback)
       surface: _darkSurface,
       primary: overrideAccent ?? _darkAccent,
       text: _darkText,
@@ -87,7 +146,8 @@ class AppTheme {
     required Color primary,
     required Color text,
   }) {
-    final baseTheme = brightness == Brightness.dark ? ThemeData.dark() : ThemeData.light();
+    final baseTheme =
+        brightness == Brightness.dark ? ThemeData.dark() : ThemeData.light();
 
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primary,
@@ -101,18 +161,19 @@ class AppTheme {
         if (states.contains(WidgetState.disabled)) {
           return _buttonBase.withValues(alpha: 0.4);
         }
-        if (states.contains(WidgetState.pressed) || states.contains(WidgetState.hovered)) {
+        if (states.contains(WidgetState.pressed) ||
+            states.contains(WidgetState.hovered)) {
           return _buttonHighlight;
         }
         return _buttonBase;
       }),
       foregroundColor: WidgetStateProperty.all<Color>(text),
-      overlayColor: WidgetStateProperty.all<Color>(_buttonHighlight.withValues(alpha: 0.1)),
+      overlayColor: WidgetStateProperty.all<Color>(
+        _buttonHighlight.withValues(alpha: 0.1),
+      ),
       elevation: WidgetStateProperty.all<double>(0),
       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
         const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -130,6 +191,7 @@ class AppTheme {
       textTheme: baseTheme.textTheme.apply(
         bodyColor: text,
         displayColor: text,
+        fontFamily: 'Adamina',
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,

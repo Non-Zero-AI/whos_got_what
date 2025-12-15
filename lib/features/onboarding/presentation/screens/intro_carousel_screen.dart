@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:whos_got_what/core/theme/app_theme.dart';
 
 class IntroCarouselScreen extends StatefulWidget {
   const IntroCarouselScreen({super.key});
@@ -18,7 +19,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
   final _pages = const [
     _IntroPageData(
       imageUrl:
-          'https://placehold.co/1000x800/png?text=Who%27s+Got+What',
+          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80',
       title: 'Discover Events',
       subtitle:
           'Never miss out on local festivals, concerts, and community gatherings in your area',
@@ -41,7 +42,8 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
       imageUrl:
           'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80',
       title: "Ready to see Who's Got What?",
-      subtitle: 'Welcome to your community. See what\'s happening around you right now.',
+      subtitle:
+          'Welcome to your community. See what\'s happening around you right now.',
     ),
   ];
 
@@ -80,16 +82,10 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
             itemBuilder: (context, index) {
               final pageIndex = index % _pages.length;
               final page = _pages[pageIndex];
-              return _IntroPage(
-                data: page,
-                // CTA is now floating above, so specific page CTA logic is removed or ignored
-                showCta: false, 
-              );
+              return _IntroPage(data: page, showCta: false);
             },
             onPageChanged: (index) {
               setState(() => _currentPage = index);
-              // Restart timer on user interaction if needed, or keep it running?
-              // Usually pause on touch, but here we just reset.
               _startAutoScroll();
             },
           ),
@@ -102,24 +98,22 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _pages.length,
-                    (index) {
-                      final isActive = (_currentPage % _pages.length) == index;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: isActive ? 24 : 8,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    },
-                  ),
+                  children: List.generate(_pages.length, (index) {
+                    final isActive = (_currentPage % _pages.length) == index;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 8,
+                      width: isActive ? 24 : 8,
+                      decoration: BoxDecoration(
+                        color:
+                            isActive
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
                 ),
                 const SizedBox(height: 16),
                 Padding(
@@ -161,16 +155,14 @@ class _IntroPage extends StatelessWidget {
   final _IntroPageData data;
   final bool showCta;
 
-  const _IntroPage({
-    required this.data,
-    required this.showCta,
-  });
+  const _IntroPage({required this.data, required this.showCta});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // Background image
         Image.network(
           data.imageUrl,
           fit: BoxFit.cover,
@@ -178,12 +170,9 @@ class _IntroPage extends StatelessWidget {
             return Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.grey.shade900,
-                    Colors.black,
-                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: AppTheme.darkGradientColors,
                 ),
               ),
               alignment: Alignment.center,
@@ -195,6 +184,7 @@ class _IntroPage extends StatelessWidget {
             );
           },
         ),
+        // Dark overlay for text readability
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -207,6 +197,7 @@ class _IntroPage extends StatelessWidget {
             ),
           ),
         ),
+        // Content
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -217,16 +208,16 @@ class _IntroPage extends StatelessWidget {
                 Text(
                   data.title,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   data.subtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
                 ),
                 const SizedBox(height: 80),
               ],

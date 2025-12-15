@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
-import 'package:whos_got_what/core/theme/app_theme.dart';
+import 'package:whos_got_what/core/theme/text_styles.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,19 +11,31 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   VideoPlayerController? _controller;
   bool _initialized = false;
   String? _errorMessage;
+  bool _isFading = false;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
     _initializeVideo();
   }
 
   Future<void> _initializeVideo() async {
-    final skipVideo = kIsWeb ||
+    final skipVideo =
+        kIsWeb ||
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux;
@@ -34,7 +46,9 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    debugPrint('Initializing video: assets/video/Splash_Screen_Animation_Generation.mp4');
+    debugPrint(
+      'Initializing video: assets/video/Splash_Screen_Animation_Generation.mp4',
+    );
     _controller = VideoPlayerController.asset(
       'assets/video/Splash_Screen_Animation_Generation.mp4',
     );
@@ -42,14 +56,16 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       debugPrint('Calling video controller initialize...');
       await _controller!.initialize();
-      debugPrint('Video initialized successfully. Duration: ${_controller!.value.duration}');
-      
+      debugPrint(
+        'Video initialized successfully. Duration: ${_controller!.value.duration}',
+      );
+
       _controller!.setLooping(false);
-      _controller!.addListener(_checkVideoEnd);
-      
+      _controller!.addListener(_checkVideoPosition);
+
       debugPrint('Starting video playback...');
       await _controller!.play();
-      
+
       if (mounted) {
         setState(() {
           _initialized = true;
@@ -74,16 +90,29 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  void _checkVideoEnd() {
+  void _checkVideoPosition() {
     final controller = _controller;
     if (controller == null) return;
-    if (controller.value.position >= controller.value.duration) {
-      _navigateToNext();
+
+    // Check if video has reached 5 seconds
+    if (controller.value.position >= const Duration(seconds: 5)) {
+      if (!_isFading) {
+        _isFading = true;
+        controller.pause();
+        _startFadeToBlack();
+      }
     }
   }
 
+  void _startFadeToBlack() {
+    _fadeController.forward().then((_) {
+      // After fade completes, navigate
+      _navigateToNext();
+    });
+  }
+
   void _navigateToNext() {
-    _controller?.removeListener(_checkVideoEnd);
+    _controller?.removeListener(_checkVideoPosition);
     if (mounted) {
       context.go('/intro');
     }
@@ -92,52 +121,74 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void dispose() {
     _controller?.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightBg, // Match light theme background
+      backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          if (_initialized && _controller != null && _controller!.value.isInitialized)
-            Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.6,
-                child: AspectRatio(
-                  aspectRatio: _controller!.value.aspectRatio,
-                  child: VideoPlayer(_controller!),
+          // True black background
+          Container(color: Colors.black),
+
+          // Header, subheader, and animation grouped together in center
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Header and subheader grouped together
+                Text(
+                  "Who's Got What",
+                  style: AppTextStyles.headlinePrimary(
+                    context,
+                  ).copyWith(color: Colors.white, fontSize: 32),
                 ),
-              ),
-            )
-          else
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage ?? 'Loading video...',
-                    style: const TextStyle(color: Colors.white),
+                const SizedBox(height: 12),
+                Text(
+                  'Your Partner for Local Adventure.',
+                  style: AppTextStyles.bodyEmphasis(context).copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 18,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 48),
+                // Video player - 600x600 container
+                if (_initialized &&
+                    _controller != null &&
+                    _controller!.value.isInitialized)
+                  SizedBox(
+                    width: 600,
+                    height: 600,
+                    child: ClipRect(
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        alignment: Alignment.center,
+                        child: SizedBox(
+                          width: _controller!.value.size.width,
+                          height: _controller!.value.size.height,
+                          child: VideoPlayer(_controller!),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const CircularProgressIndicator(color: Colors.white),
+              ],
             ),
-          
-          // Skip button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
-            child: TextButton(
-              onPressed: _navigateToNext,
-              child: const Text(
-                'Skip',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+          ),
+
+          // Fade to black overlay
+          AnimatedBuilder(
+            animation: _fadeAnimation,
+            builder: (context, child) {
+              return Container(
+                color: Colors.black.withValues(alpha: _fadeAnimation.value),
+              );
+            },
           ),
         ],
       ),
