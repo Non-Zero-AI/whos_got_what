@@ -29,6 +29,7 @@ class _RaisedButtonState extends State<RaisedButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     
     // Default gradient based on primary color
     final defaultGradient = LinearGradient(
@@ -42,6 +43,28 @@ class _RaisedButtonState extends State<RaisedButton> {
 
     final effectiveGradient = widget.gradient ?? defaultGradient;
     final radius = widget.borderRadius ?? BorderRadius.circular(16);
+    
+    // Neumorphic shadow parameters
+    final blurRadius = _isPressed ? 8.0 : 12.0;
+    final spreadRadius = _isPressed ? 0.0 : 1.0;
+    final offset = _isPressed ? 2.0 : 6.0;
+    
+    // Shadow colors that match background brightness
+    final darkShadowColor = isDark
+        ? Colors.black.withValues(alpha: _isPressed ? 0.3 : 0.4)
+        : Colors.black.withValues(alpha: _isPressed ? 0.1 : 0.15);
+    
+    final lightShadowColor = isDark
+        ? Colors.white.withValues(alpha: _isPressed ? 0.02 : 0.05)
+        : Colors.white.withValues(alpha: _isPressed ? 0.15 : 0.2);
+    
+    // Shadow offsets: dark (bottom-right), light (top-left)
+    final darkOffset = _isPressed
+        ? Offset(offset * 0.5, offset * 0.5) // Inset appearance
+        : Offset(offset, offset);
+    final lightOffset = _isPressed
+        ? Offset(-offset * 0.5, -offset * 0.5) // Inset appearance
+        : Offset(-offset, -offset);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -49,28 +72,29 @@ class _RaisedButtonState extends State<RaisedButton> {
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onPressed,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
           borderRadius: radius,
           gradient: effectiveGradient,
-          boxShadow: _isPressed
-              ? [] // No shadow (or inner shadow) when pressed
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    offset: const Offset(4, 4),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    offset: const Offset(-4, -4),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
+          boxShadow: [
+            // Dark shadow (bottom-right)
+            BoxShadow(
+              color: darkShadowColor,
+              offset: darkOffset,
+              blurRadius: blurRadius,
+              spreadRadius: spreadRadius,
+            ),
+            // Light highlight (top-left)
+            BoxShadow(
+              color: lightShadowColor,
+              offset: lightOffset,
+              blurRadius: blurRadius,
+              spreadRadius: spreadRadius,
+            ),
+          ],
         ),
         alignment: Alignment.center,
         child: DefaultTextStyle(

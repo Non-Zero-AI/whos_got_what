@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
 
+/// MatteCard - Deprecated wrapper for NeumorphicContainer
+/// Use NeumorphicContainer directly for new code
+@Deprecated('Use NeumorphicContainer instead')
 class MatteCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -22,32 +26,13 @@ class MatteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final radius = borderRadius ?? BorderRadius.circular(20);
-    final bgColor = color ?? colorScheme.surface;
-
-    return Container(
+    return NeumorphicContainer(
       width: width,
       height: height,
       margin: margin,
-      padding: padding ?? const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: radius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(10, 10),
-            blurRadius: 20,
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.05),
-            offset: const Offset(-5, -5),
-            blurRadius: 10,
-          ),
-        ],
-      ),
+      padding: padding,
+      borderRadius: borderRadius,
+      surfaceColor: color,
       child: child,
     );
   }

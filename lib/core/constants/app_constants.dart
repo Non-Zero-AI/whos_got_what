@@ -7,7 +7,7 @@ class AppConstants {
   static const String stripePublishableKey = 'pk_live_51RE9XvJ0dMnFEmoQzbXElvh83OwYwXpMFJLdgmcGlV7lDxWtvAPQSGc6GWFVF59UZHmiS4uwgrzP5xT33ooHznik00LzgRw28V';
   
   // Google Maps
-  static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+  static const String googleMapsApiKey = 'AIzaSyB0bkv1p5yhPGR2DNfwj5dJJXVSjKGjk6k';
 
   // NOTE: Secret keys should NEVER be stored in the app. Use them in Supabase Edge Functions.
 

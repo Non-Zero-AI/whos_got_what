@@ -8,6 +8,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
 import 'package:whos_got_what/features/events/data/event_repository_impl.dart';
 import 'package:whos_got_what/features/events/data/user_events_provider.dart';
+import 'package:whos_got_what/shared/widgets/neumorphic_text_field.dart';
+import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
+import 'package:whos_got_what/shared/widgets/address_autocomplete_field.dart';
+import 'package:whos_got_what/core/theme/text_styles.dart';
 
 class CreateEventScreen extends ConsumerStatefulWidget {
   const CreateEventScreen({super.key});
@@ -244,10 +248,14 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('EEE, MMM d, y • h:mm a');
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Event'),
+        title: Text(
+          'Create Event',
+          style: AppTextStyles.titleLarge(context),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -257,79 +265,136 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
+                NeumorphicTextField(
                   controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Event name'),
+                  hintText: 'Enter event name',
+                  labelText: 'Event name',
                   validator: (v) => v == null || v.trim().isEmpty ? 'Please enter a name' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                NeumorphicTextField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Details'),
+                  hintText: 'Enter event details',
+                  labelText: 'Details',
                   maxLines: 3,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                AddressAutocompleteField(
                   controller: _locationController,
-                  decoration: const InputDecoration(labelText: 'Location'),
+                  hintText: 'Enter address or place name',
+                  labelText: 'Location',
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isAllDay,
-                      onChanged: (v) {
-                        setState(() {
-                          _isAllDay = v ?? false;
-                          if (_isAllDay) _endDate = null;
-                        });
-                      },
-                    ),
-                    const Text('All day event'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Start'),
-                  subtitle: Text(dateFormatter.format(_startDate)),
-                  trailing: const Icon(Icons.edit_calendar_outlined),
-                  onTap: _pickStartDateTime,
-                ),
-                if (!_isAllDay)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('End'),
-                    subtitle: Text(
-                      _endDate == null ? 'Select end date & time' : dateFormatter.format(_endDate!),
-                    ),
-                    trailing: const Icon(Icons.edit_calendar_outlined),
-                    onTap: _pickEndDateTime,
+                const SizedBox(height: 20),
+                NeumorphicContainer(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _isAllDay,
+                        onChanged: (v) {
+                          setState(() {
+                            _isAllDay = v ?? false;
+                            if (_isAllDay) _endDate = null;
+                          });
+                        },
+                      ),
+                      Text(
+                        'All day event',
+                        style: AppTextStyles.body(context),
+                      ),
+                    ],
                   ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _ticketUrlController,
-                  decoration: const InputDecoration(labelText: 'Ticket purchase URL'),
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _linkUrlController,
-                  decoration: const InputDecoration(labelText: 'Event website / info URL'),
+                NeumorphicContainer(
+                  padding: const EdgeInsets.all(16),
+                  onTap: _pickStartDateTime,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start',
+                            style: AppTextStyles.labelSecondary(context),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateFormatter.format(_startDate),
+                            style: AppTextStyles.body(context),
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.edit_calendar_outlined,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
                 ),
-
+                if (!_isAllDay) ...[
+                  const SizedBox(height: 12),
+                  NeumorphicContainer(
+                    padding: const EdgeInsets.all(16),
+                    onTap: _pickEndDateTime,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'End',
+                              style: AppTextStyles.labelSecondary(context),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _endDate == null
+                                  ? 'Select end date & time'
+                                  : dateFormatter.format(_endDate!),
+                              style: AppTextStyles.body(context),
+                            ),
+                          ],
+                        ),
+                        Icon(
+                          Icons.edit_calendar_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                NeumorphicTextField(
+                  controller: _ticketUrlController,
+                  hintText: 'Enter ticket purchase URL',
+                  labelText: 'Ticket purchase URL',
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 16),
+                NeumorphicTextField(
+                  controller: _linkUrlController,
+                  hintText: 'Enter event website URL',
+                  labelText: 'Event website / info URL',
+                  keyboardType: TextInputType.url,
+                ),
                 const SizedBox(height: 24),
-                const Text('Event Image', style: TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: _isUploadingImage ? null : _pickImage,
-                      child: Container(
+                Text(
+                  'Event Image',
+                  style: AppTextStyles.titleMedium(context),
+                ),
+                const SizedBox(height: 12),
+                NeumorphicContainer(
+                  padding: EdgeInsets.zero,
+                  onTap: _isUploadingImage ? null : _pickImage,
+                  child: Stack(
+                    children: [
+                      Container(
                         height: 200,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           image: _selectedImageFile != null
                               ? DecorationImage(
                                   image: FileImage(_selectedImageFile!),
@@ -340,49 +405,55 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                         child: _selectedImageFile == null
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.add_photo_alternate_outlined, size: 40),
-                                  SizedBox(height: 8),
-                                  Text('Tap to upload image'),
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    size: 40,
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap to upload image',
+                                    style: AppTextStyles.captionMuted(context),
+                                  ),
                                 ],
                               )
                             : null,
                       ),
-                    ),
-                    if (_selectedImageFile != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: _removeImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
+                      if (_selectedImageFile != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: NeumorphicContainer(
+                            padding: EdgeInsets.zero,
+                            borderRadius: BorderRadius.circular(20),
+                            width: 32,
+                            height: 32,
+                            onTap: _removeImage,
+                            child: Icon(
                               Icons.close,
-                              color: Colors.white,
-                              size: 20,
+                              color: theme.colorScheme.onSurface,
+                              size: 18,
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
                 if (_isUploadingImage)
                   const Padding(
                     padding: EdgeInsets.only(top: 16.0),
                     child: LinearProgressIndicator(),
                   ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _isUploadingImage ? null : _submit,
-                    child: Text(_isUploadingImage ? 'Uploading...' : 'Save Event'),
+                    child: Text(
+                      _isUploadingImage ? 'Uploading...' : 'Save Event',
+                      style: AppTextStyles.labelPrimary(context),
+                    ),
                   ),
                 ),
               ],

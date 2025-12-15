@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_theme.dart';
 
 class ThemeState {
@@ -8,8 +9,8 @@ class ThemeState {
   final Color? accentColor;
 
   const ThemeState({
-    this.palette = AppPalette.matteDark,
-    this.mode = ThemeMode.dark,
+    this.palette = AppPalette.matteLight,
+    this.mode = ThemeMode.light,
     this.accentColor,
   });
 
@@ -27,9 +28,38 @@ class ThemeState {
 }
 
 class ThemeNotifier extends Notifier<ThemeState> {
+  static const String _isDarkKey = 'is_dark';
+  bool _isInitialized = false;
+
   @override
   ThemeState build() {
+    if (!_isInitialized) {
+      _isInitialized = true;
+      _loadThemePreference();
+    }
     return const ThemeState();
+  }
+
+  Future<void> _loadThemePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isDark = prefs.getBool(_isDarkKey);
+      if (isDark != null) {
+        state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+      }
+    } catch (e) {
+      // If loading fails, use default (light theme)
+      debugPrint('Error loading theme preference: $e');
+    }
+  }
+
+  Future<void> _saveThemePreference(bool isDark) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_isDarkKey, isDark);
+    } catch (e) {
+      debugPrint('Error saving theme preference: $e');
+    }
   }
 
   void setPalette(AppPalette palette) {
@@ -38,6 +68,7 @@ class ThemeNotifier extends Notifier<ThemeState> {
 
   void toggleTheme(bool isDark) {
     state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+    _saveThemePreference(isDark);
   }
 
   void setAccentColor(Color color) {
@@ -45,4 +76,6 @@ class ThemeNotifier extends Notifier<ThemeState> {
   }
 }
 
-final themeProvider = NotifierProvider<ThemeNotifier, ThemeState>(ThemeNotifier.new);
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeState>(
+  ThemeNotifier.new,
+);

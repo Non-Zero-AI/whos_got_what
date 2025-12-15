@@ -7,6 +7,8 @@ import 'package:whos_got_what/features/events/data/user_events_provider.dart';
 import 'package:whos_got_what/features/events/domain/models/event_model.dart';
 import 'package:whos_got_what/features/events/presentation/widgets/event_card.dart';
 import 'package:whos_got_what/features/profile/data/profile_providers.dart';
+import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
+import 'package:whos_got_what/core/theme/text_styles.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -110,13 +112,13 @@ class ProfileScreen extends ConsumerWidget {
                                     children: [
                                       Text(
                                         displayName,
-                                        style: theme.textTheme.titleLarge,
+                                        style: AppTextStyles.titleLarge(context),
                                       ),
                                       if (handle != null && handle.trim().isNotEmpty) ...[
                                         const SizedBox(height: 2),
                                         Text(
                                           '@${handle.trim()}',
-                                          style: theme.textTheme.bodySmall,
+                                          style: AppTextStyles.captionMuted(context),
                                         ),
                                       ],
                                       if (isPaid) ...[
@@ -125,21 +127,18 @@ class ProfileScreen extends ConsumerWidget {
                                           children: [
                                             Text(
                                               'Business Account',
-                                              style: theme.textTheme.bodySmall,
+                                              style: AppTextStyles.bodySmall(context),
                                             ),
                                             const SizedBox(width: 8),
-                                            Container(
+                                            NeumorphicContainer(
                                               padding: const EdgeInsets.symmetric(
                                                 horizontal: 8,
                                                 vertical: 4,
                                               ),
-                                              decoration: BoxDecoration(
-                                                color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
+                                              borderRadius: BorderRadius.circular(12),
                                               child: Text(
                                                 'PAID',
-                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                style: AppTextStyles.labelSecondary(context).copyWith(
                                                   color: theme.colorScheme.primary,
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -181,7 +180,7 @@ class ProfileScreen extends ConsumerWidget {
                             const SizedBox(height: 8),
                             Text(
                               profile.bio!,
-                              style: theme.textTheme.bodyMedium,
+                              style: AppTextStyles.body(context),
                             ),
                           ],
                           const SizedBox(height: 12),
@@ -298,25 +297,21 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return NeumorphicContainer(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: BorderRadius.circular(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             value,
-            style: theme.textTheme.titleMedium,
+            style: AppTextStyles.titleMedium(context),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: theme.textTheme.bodySmall,
+            style: AppTextStyles.captionMuted(context),
           ),
         ],
       ),

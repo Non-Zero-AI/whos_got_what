@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
+import 'package:whos_got_what/shared/widgets/neumorphic_text_field.dart';
+import 'package:whos_got_what/core/theme/text_styles.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   final bool isLoginMode;
@@ -130,7 +132,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isLoginMode ? 'Log in to Who\'s Got What' : 'Sign up to see Who\'s Got What'),
+        title: Text(
+          _isLoginMode ? 'Log in to Who\'s Got What' : 'Sign up to see Who\'s Got What',
+          style: AppTextStyles.titleLarge(context),
+        ),
       ),
       body: Center(
         child: Padding(
@@ -142,10 +147,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               children: [
                 Text(
                   _isLoginMode ? 'Welcome back' : 'Create your account',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: AppTextStyles.headlinePrimary(context),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 OutlinedButton.icon(
                   onPressed: _isGoogleLoading ? null : _signInWithGoogle,
                   icon: _isGoogleLoading
@@ -155,40 +160,51 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.login),
-                  label: const Text('Continue with Google'),
+                  label: Text(
+                    'Continue with Google',
+                    style: AppTextStyles.labelPrimary(context),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(child: Divider()),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text('or use email'),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(
+                        'or use email',
+                        style: AppTextStyles.captionMuted(context),
+                      ),
                     ),
                     Expanded(child: Divider()),
                   ],
                 ),
-                const SizedBox(height: 16),
-                TextField(
+                const SizedBox(height: 24),
+                NeumorphicTextField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  hintText: 'Enter your email',
+                  labelText: 'Email',
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                NeumorphicTextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
+                  hintText: 'Enter your password',
+                  labelText: 'Password',
                   obscureText: true,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 if (_isLoading)
                   const Center(child: CircularProgressIndicator())
                 else ...[
                   FilledButton(
                     onPressed: _isLoginMode ? _signIn : _signUp,
-                    child: Text(_isLoginMode ? 'Log in' : 'Create account'),
+                    child: Text(
+                      _isLoginMode ? 'Log in' : 'Create account',
+                      style: AppTextStyles.labelPrimary(context),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -199,6 +215,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       _isLoginMode
                           ? "Don't have an account? Sign up"
                           : 'Already have an account? Log in',
+                      style: AppTextStyles.body(context),
                     ),
                   ),
                 ],
