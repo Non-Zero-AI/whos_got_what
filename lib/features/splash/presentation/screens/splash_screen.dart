@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import 'package:whos_got_what/core/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +14,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   VideoPlayerController? _controller;
   bool _initialized = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -32,20 +34,43 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
+    debugPrint('Initializing video: assets/video/Splash_Screen_Animation_Generation.mp4');
     _controller = VideoPlayerController.asset(
-      'assets/video/App_Splash_Screen_Animation_Generation.mp4',
+      'assets/video/Splash_Screen_Animation_Generation.mp4',
     );
 
     try {
+      debugPrint('Calling video controller initialize...');
       await _controller!.initialize();
+      debugPrint('Video initialized successfully. Duration: ${_controller!.value.duration}');
+      
+      _controller!.setLooping(false);
       _controller!.addListener(_checkVideoEnd);
+      
+      debugPrint('Starting video playback...');
       await _controller!.play();
-      setState(() {
-        _initialized = true;
-      });
-    } catch (e) {
+      
+      if (mounted) {
+        setState(() {
+          _initialized = true;
+          _errorMessage = null;
+        });
+      }
+      debugPrint('Video state updated, should be visible now');
+    } catch (e, stackTrace) {
       debugPrint('Error initializing video: $e');
-      _navigateToNext();
+      debugPrint('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load video: $e';
+          _initialized = false;
+        });
+      }
+      // Wait a bit then navigate
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        _navigateToNext();
+      }
     }
   }
 
@@ -73,19 +98,34 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // or match app theme
+      backgroundColor: AppTheme.lightBg, // Match light theme background
       body: Stack(
         fit: StackFit.expand,
         children: [
-          if (_initialized && _controller != null)
+          if (_initialized && _controller != null && _controller!.value.isInitialized)
             Center(
-              child: AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio,
-                child: VideoPlayer(_controller!),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.6,
+                child: AspectRatio(
+                  aspectRatio: _controller!.value.aspectRatio,
+                  child: VideoPlayer(_controller!),
+                ),
               ),
             )
           else
-            const Center(child: CircularProgressIndicator()),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage ?? 'Loading video...',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           
           // Skip button
           Positioned(
