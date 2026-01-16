@@ -1,57 +1,33 @@
 # Miscellaneous
-*.class
+*.DS_Store
 *.log
-*.pyc
 *.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
 .history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
 .idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Flutter/Dart related
+**/whos_got_what/.dart_tool/
+**/whos_got_what/.flutter-plugins
+**/whos_got_what/.flutter-plugins-dependencies
+**/whos_got_what/.pub-cache/
+**/whos_got_what/.pub/
+**/whos_got_what/build/
+**/whos_got_what/ios/Flutter/Generated.xcconfig
+**/whos_got_what/macos/Flutter/ephemeral
+**/whos_got_what/android/local.properties
+**/whos_got_what/android/app/debug
+**/whos_got_what/android/app/profile
+**/whos_got_what/android/app/release
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
+# Web related
+**/whos_got_what_web/node_modules/
+**/whos_got_what_web/.next/
+**/whos_got_what_web/out/
+**/whos_got_what_web/build/
+**/whos_got_what_web/.vercel/
+**/whos_got_what_web/next-env.d.ts
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Valid secrets
-.env
-
-# iOS
-ios/Flutter/Generated.xcconfig
-
-# macOS
-macos/Flutter/ephemeral
-
-# Android
-android/local.properties
+# Secrets and environment
+.env*
+**/*.pem
