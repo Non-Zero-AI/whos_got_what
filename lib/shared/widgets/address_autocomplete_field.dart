@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:whos_got_what/shared/widgets/neumorphic_text_field.dart';
 import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
 import 'package:whos_got_what/core/constants/app_constants.dart';
@@ -11,7 +12,7 @@ class AddressAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final String? hintText;
   final String? labelText;
-  final void Function(String)? onAddressSelected;
+  final void Function(String, LatLng?)? onAddressSelected;
 
   const AddressAutocompleteField({
     super.key,
@@ -29,8 +30,10 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   List<Map<String, dynamic>> _suggestions = [];
   bool _isLoading = false;
   String _lastQuery = '';
+  bool _isSelectionChanging = false;
 
   Future<void> _fetchSuggestions(String query) async {
+    if (_isSelectionChanging) return;
     if (query.isEmpty || query.length < 3) {
       setState(() {
         _suggestions = [];
@@ -83,33 +86,54 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   }
 
   Future<void> _selectAddress(String description, String placeId) async {
-    widget.controller.text = description;
     setState(() {
+      _isSelectionChanging = true;
       _suggestions = [];
       _lastQuery = '';
     });
-    widget.onAddressSelected?.call(description);
+    
+    widget.controller.text = description;
 
-    // Optionally get full address details
+    LatLng? coords;
+    String finalAddress = description;
+
+    // Optionally get full address details and GEOMETRY
     try {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/place/details/json'
         '?place_id=$placeId'
         '&key=${AppConstants.googleMapsApiKey}'
-        '&fields=formatted_address',
+        '&fields=formatted_address,geometry',
       );
 
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final result = data['result'] as Map<String, dynamic>?;
+        
         final formattedAddress = result?['formatted_address'] as String?;
-        if (formattedAddress != null && formattedAddress != description) {
+        if (formattedAddress != null) {
+          finalAddress = formattedAddress;
           widget.controller.text = formattedAddress;
+        }
+
+        final location = result?['geometry']?['location'] as Map<String, dynamic>?;
+        if (location != null) {
+          coords = LatLng(
+            (location['lat'] as num).toDouble(),
+            (location['lng'] as num).toDouble(),
+          );
         }
       }
     } catch (e) {
       debugPrint('Place details error: $e');
+    } finally {
+      widget.onAddressSelected?.call(finalAddress, coords);
+      if (mounted) {
+        setState(() {
+          _isSelectionChanging = false;
+        });
+      }
     }
   }
 

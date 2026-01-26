@@ -19,7 +19,17 @@ class EventModel with _$EventModel {
     @Default(0) int likes,
     @Default(0) int views,
     @Default(false) bool isBookmarked,
+    @Default(0) int bookmarksCount,
+    @Default('public') String planVisibility, // 'public', 'private'
+    @Default(0) int creditsRequired,
+    @Default(0) int totalSlots,
+    String? recurrence, // 'none', 'daily', 'weekly', 'monthly'
+    double? latitude,
+    double? longitude,
+    @Default(false) bool archived,
+    @Default('event') String postType, // 'event' or 'promotion'
   }) = _EventModel;
 
-  factory EventModel.fromJson(Map<String, dynamic> json) => _$EventModelFromJson(json);
+  factory EventModel.fromJson(Map<String, dynamic> json) =>
+      _$EventModelFromJson(json);
 }

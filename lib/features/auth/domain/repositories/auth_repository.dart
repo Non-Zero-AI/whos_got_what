@@ -11,6 +11,7 @@ abstract class AuthRepository {
     required String password,
   });
   Future<void> signOut();
+  Future<void> deleteAccount();
   User? get currentUser;
 }
 
@@ -46,6 +47,17 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    await _supabase.auth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    // In Supabase, users can be deleted via the Admin API or an RPC that calls 
+    // delete from auth.users (if permitted). 
+    // Since we don't have Admin keys here, we use the 'delete_user_account' RPC 
+    // or a direct auth function if available.
+    // For now, we'll try calling an RPC 'delete_user' which is a common pattern.
+    await _supabase.rpc('delete_user_account');
     await _supabase.auth.signOut();
   }
 

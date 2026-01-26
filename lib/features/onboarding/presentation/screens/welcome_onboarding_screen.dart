@@ -12,10 +12,12 @@ class WelcomeOnboardingScreen extends ConsumerStatefulWidget {
   const WelcomeOnboardingScreen({super.key});
 
   @override
-  ConsumerState<WelcomeOnboardingScreen> createState() => _WelcomeOnboardingScreenState();
+  ConsumerState<WelcomeOnboardingScreen> createState() =>
+      _WelcomeOnboardingScreenState();
 }
 
-class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScreen> {
+class _WelcomeOnboardingScreenState
+    extends ConsumerState<WelcomeOnboardingScreen> {
   final PageController _controller = PageController();
   int _step = 0;
 
@@ -39,12 +41,15 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
       final profile = ref.read(profileControllerProvider).value;
       final repo = ref.read(profileRepositoryProvider);
       if (profile == null) {
-        // We need the current user id from Supabase
         final supabaseUser = Supabase.instance.client.auth.currentUser;
         if (supabaseUser == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error: No authenticated user found. Please try logging in again.')),
+              const SnackBar(
+                content: Text(
+                  'Error: No authenticated user found. Please try logging in again.',
+                ),
+              ),
             );
           }
           return;
@@ -68,14 +73,13 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
         );
         await repo.upsertProfile(updated);
       }
-      // Refresh the cached profile for future reads
       ref.invalidate(profileControllerProvider);
       _goToStep(1);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _savingUsername = false);
@@ -117,13 +121,18 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
       if (supabaseUser == null) return;
 
       final fileExt = _avatarFile!.path.split('.').last;
-      final fileName = '${supabaseUser.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-      
+      final fileName =
+          '${supabaseUser.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
       try {
         await Supabase.instance.client.storage
             .from('avatars')
-            .upload(fileName, _avatarFile!, fileOptions: const FileOptions(upsert: true));
-        
+            .upload(
+              fileName,
+              _avatarFile!,
+              fileOptions: const FileOptions(upsert: true),
+            );
+
         final imageUrl = Supabase.instance.client.storage
             .from('avatars')
             .getPublicUrl(fileName);
@@ -137,15 +146,14 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
         }
       } catch (storageError) {
         debugPrint('Storage error (might be missing bucket): $storageError');
-        // Continue anyway
       }
-      
+
       _goToStep(2);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving avatar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving avatar: $e')));
       }
     } finally {
       if (mounted) setState(() => _savingAvatar = false);
@@ -167,19 +175,42 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
     }
 
     if (!mounted) return;
-    context.go('/home');
+    context.go('/subscription');
   }
 
   Future<void> _requestLocation() async {
     setState(() => _requestingLocation = true);
     try {
       await Geolocator.requestPermission();
-      // We are not yet storing location; just requesting permission.
     } finally {
       if (mounted) setState(() => _requestingLocation = false);
       if (mounted) {
         await _completeWelcomeAndGoHome();
       }
+    }
+  }
+
+  Future<void> _saveGoal(String goal) async {
+    setState(
+      () => _savingUsername = true,
+    ); // Reuse saving state for simplicity or add new one
+    try {
+      final profile = ref.read(profileControllerProvider).value;
+      final repo = ref.read(profileRepositoryProvider);
+      if (profile != null) {
+        final updated = profile.copyWith(onboardingGoal: goal);
+        await repo.upsertProfile(updated);
+        ref.invalidate(profileControllerProvider);
+      }
+      _goToStep(2);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _savingUsername = false);
     }
   }
 
@@ -193,9 +224,7 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Welcome"),
-      ),
+      appBar: AppBar(title: const Text("Welcome")),
       body: SafeArea(
         child: PageView(
           controller: _controller,
@@ -206,12 +235,13 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
               saving: _savingUsername,
               onNext: _saveUsername,
             ),
+            _GoalStep(onSelected: _saveGoal, onBack: _goBack),
             _AvatarStep(
               saving: _savingAvatar,
               selectedImage: _avatarFile,
               onPickImage: _pickImage,
               onBack: _goBack,
-              onSkip: () => _goToStep(2),
+              onSkip: () => _goToStep(3),
               onDone: _saveAvatarAndContinue,
             ),
             _LocationStep(
@@ -220,6 +250,118 @@ class _WelcomeOnboardingScreenState extends ConsumerState<WelcomeOnboardingScree
               onAllow: _requestLocation,
               onSkip: _completeWelcomeAndGoHome,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalStep extends StatelessWidget {
+  final Function(String) onSelected;
+  final VoidCallback onBack;
+
+  const _GoalStep({required this.onSelected, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: onBack,
+            padding: EdgeInsets.zero,
+            alignment: Alignment.centerLeft,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "What brings you here?",
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Tell us a bit about why you're joining Streetside Local.",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 32),
+          _GoalOption(
+            icon: Icons.search,
+            title: "I'm looking for local adventure",
+            subtitle: "Find events, workshops, and more nearby.",
+            onTap: () => onSelected('find'),
+          ),
+          const SizedBox(height: 16),
+          _GoalOption(
+            icon: Icons.event,
+            title: "I want to share my events",
+            subtitle: "Post and manage your own happenings.",
+            onTap: () => onSelected('share'),
+          ),
+          const SizedBox(height: 16),
+          _GoalOption(
+            icon: Icons.business,
+            title: "I'm a business looking for growth",
+            subtitle: "Reach more locals and build your brand.",
+            onTap: () => onSelected('business'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoalOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _GoalOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.dividerColor),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: theme.colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
           ],
         ),
       ),
@@ -240,43 +382,68 @@ class _UsernameStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          const Text(
-            "Welcome to Who's Got What!",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          const Text('What should we call you?'),
-          const SizedBox(height: 16),
-          TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Username',
-              hintText: 'your_handle',
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.1,
+            child: Image.asset(
+              'assets/images/onboarding_username_bg.png',
+              fit: BoxFit.cover,
             ),
           ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: saving ? null : onNext,
-              child: saving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Next'),
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              Center(
+                child: Image.asset(
+                  'assets/icons/all-icons/NewAppIcons/appstore.png',
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Center(
+                child: Text(
+                  'Welcome to Streetside Local!',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('What should we call you?'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  hintText: 'your_handle',
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: saving ? null : onNext,
+                  child:
+                      saving
+                          ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text('Next'),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -300,71 +467,99 @@ class _AvatarStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: onBack,
-            padding: EdgeInsets.zero,
-            alignment: Alignment.centerLeft,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.1,
+            child: Image.asset(
+              'assets/images/splash_community.png',
+              fit: BoxFit.cover,
+            ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Add some style to your account',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: GestureDetector(
-              onTap: onPickImage,
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: selectedImage != null ? FileImage(selectedImage!) : null,
-                    child: selectedImage == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.blue, // Theme color
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
+        ),
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: onBack,
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
               ),
-            ),
+              const SizedBox(height: 8),
+              const Text(
+                'Add some style to your account',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 32),
+              Center(
+                child: GestureDetector(
+                  onTap: onPickImage,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage:
+                            selectedImage != null
+                                ? FileImage(selectedImage!)
+                                : null,
+                        child:
+                            selectedImage == null
+                                ? const Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.grey,
+                                )
+                                : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(child: Text('Tap to choose a photo')),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: saving ? null : onDone,
+                  child:
+                      saving
+                          ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : Text(
+                            selectedImage != null ? 'Continue' : 'Skip for now',
+                          ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Center(child: Text('Tap to choose a photo')),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: saving ? null : onDone,
-              child: saving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(selectedImage != null ? 'Continue' : 'Skip for now'),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -402,7 +597,7 @@ class _LocationStep extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            "In order to show Who's Got What in your area, we need some permissions.",
+            'In order to show Streetside Local in your area, we need some permissions.',
           ),
           const Spacer(),
           Row(
@@ -414,13 +609,14 @@ class _LocationStep extends StatelessWidget {
               const Spacer(),
               ElevatedButton(
                 onPressed: requesting ? null : onAllow,
-                child: requesting
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Allow location'),
+                child:
+                    requesting
+                        ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : const Text('Allow location'),
               ),
             ],
           ),

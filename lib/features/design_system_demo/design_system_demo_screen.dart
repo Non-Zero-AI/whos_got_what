@@ -13,32 +13,10 @@ class DesignSystemDemoScreen extends ConsumerWidget {
     final themeState = ref.watch(themeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Design System Demo'),
-      ),
+      appBar: AppBar(title: const Text('Design System Demo')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'Theme Switcher',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: AppPalette.values.map((palette) {
-              return ChoiceChip(
-                label: Text(palette.name),
-                selected: themeState.palette == palette,
-                onSelected: (selected) {
-                  if (selected) {
-                    ref.read(themeProvider.notifier).setPalette(palette);
-                  }
-                },
-              );
-            }).toList(),
-          ),
           const SizedBox(height: 30),
           const Text(
             'Raised Buttons',

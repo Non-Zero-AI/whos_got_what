@@ -55,28 +55,25 @@ class _NeumorphicContainerState extends State<NeumorphicContainer> {
     // Radius based on component role: cards use 20-24, buttons use 12-16
     final radius = widget.borderRadius ?? BorderRadius.circular(20);
     
-    // Shadow parameters based on depth and pressed state
-    final shadowIntensity = widget.depth;
-    final blurRadius = pressed ? 8.0 : (12.0 + shadowIntensity * 4);
-    final spreadRadius = pressed ? 0.0 : (1.0 + shadowIntensity * 0.5);
-    final offset = pressed ? 2.0 : (6.0 + shadowIntensity * 2);
+    // Shadow parameters based on Tier 1 (8 radius, (0, 4) offset)
+    final blurRadius = pressed ? 4.0 : 8.0;
+    final spreadRadius = 0.0;
+    final offset = pressed ? 2.0 : 4.0;
     
     // Calculate shadow colors based on theme brightness
+    // Tier 1 uses 12% opacity for dark shadows
     final darkShadowColor = isDark
-        ? Colors.black.withValues(alpha: pressed ? 0.3 : 0.4)
-        : Colors.black.withValues(alpha: pressed ? 0.05 : 0.1);
-    
+        ? Colors.black.withValues(alpha: pressed ? 0.08 : 0.12)
+        : Colors.black.withValues(alpha: pressed ? 0.05 : 0.08);
+
+    // Light highlight (top-left) should be subtle, especially in dark mode
     final lightShadowColor = isDark
-        ? Colors.white.withValues(alpha: pressed ? 0.02 : 0.05)
-        : Colors.white.withValues(alpha: pressed ? 0.15 : 0.2);
+        ? Colors.white.withValues(alpha: pressed ? 0.02 : 0.03)
+        : Colors.white.withValues(alpha: pressed ? 0.4 : 0.6);
     
     // Shadow offsets: dark (bottom-right), light (top-left)
-    final darkOffset = pressed
-        ? Offset(offset * 0.5, offset * 0.5) // Inset appearance
-        : Offset(offset, offset);
-    final lightOffset = pressed
-        ? Offset(-offset * 0.5, -offset * 0.5) // Inset appearance
-        : Offset(-offset, -offset);
+    final darkOffset = Offset(0, offset);
+    final lightOffset = Offset(0, -0.5); // Sharpest possible thin top highlight
 
     Widget container = AnimatedContainer(
       duration: const Duration(milliseconds: 200),

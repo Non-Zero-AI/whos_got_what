@@ -1,29 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_theme.dart';
 
 class ThemeState {
-  final AppPalette palette;
   final ThemeMode mode;
-  final Color? accentColor;
 
-  const ThemeState({
-    this.palette = AppPalette.matteLight,
-    this.mode = ThemeMode.light,
-    this.accentColor,
-  });
+  const ThemeState({this.mode = ThemeMode.dark});
 
-  ThemeState copyWith({
-    AppPalette? palette,
-    ThemeMode? mode,
-    Color? accentColor,
-  }) {
-    return ThemeState(
-      palette: palette ?? this.palette,
-      mode: mode ?? this.mode,
-      accentColor: accentColor ?? this.accentColor,
-    );
+  ThemeState copyWith({ThemeMode? mode}) {
+    return ThemeState(mode: mode ?? this.mode);
   }
 }
 
@@ -37,18 +22,21 @@ class ThemeNotifier extends Notifier<ThemeState> {
       _isInitialized = true;
       _loadThemePreference();
     }
-    return const ThemeState();
+    return const ThemeState(mode: ThemeMode.dark);
   }
 
   Future<void> _loadThemePreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final isDark = prefs.getBool(_isDarkKey);
+
+      ThemeMode mode = ThemeMode.dark;
       if (isDark != null) {
-        state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+        mode = isDark ? ThemeMode.dark : ThemeMode.light;
       }
+
+      state = state.copyWith(mode: mode);
     } catch (e) {
-      // If loading fails, use default (light theme)
       debugPrint('Error loading theme preference: $e');
     }
   }
@@ -62,17 +50,10 @@ class ThemeNotifier extends Notifier<ThemeState> {
     }
   }
 
-  void setPalette(AppPalette palette) {
-    state = state.copyWith(palette: palette);
-  }
-
   void toggleTheme(bool isDark) {
-    state = state.copyWith(mode: isDark ? ThemeMode.dark : ThemeMode.light);
+    final newMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    state = state.copyWith(mode: newMode);
     _saveThemePreference(isDark);
-  }
-
-  void setAccentColor(Color color) {
-    state = state.copyWith(accentColor: color);
   }
 }
 

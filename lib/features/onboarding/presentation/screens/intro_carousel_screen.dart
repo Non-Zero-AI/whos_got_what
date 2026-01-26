@@ -18,30 +18,26 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
 
   final _pages = const [
     _IntroPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80',
+      imageUrl: 'assets/images/splash_market.png',
       title: 'Discover Events',
       subtitle:
           'Never miss out on local festivals, concerts, and community gatherings in your area',
     ),
     _IntroPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+      imageUrl: 'assets/images/splash_concert.png',
       title: 'Find great deals',
       subtitle:
           'Stay updated on special promotions, discounts, and exclusive offers from local spots',
     ),
     _IntroPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1000&q=80',
+      imageUrl: 'assets/images/splash_community.png',
       title: 'Join the community',
       subtitle:
           'Start exploring and connecting with local businesses and events in your neighborhood',
     ),
     _IntroPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80',
-      title: "Ready to see Who's Got What?",
+      imageUrl: 'assets/images/splash_festival.png',
+      title: 'Ready to see Streetside Local?',
       subtitle:
           'Welcome to your community. See what\'s happening around you right now.',
     ),
@@ -163,7 +159,7 @@ class _IntroPage extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Background image
-        Image.network(
+        Image.asset(
           data.imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {

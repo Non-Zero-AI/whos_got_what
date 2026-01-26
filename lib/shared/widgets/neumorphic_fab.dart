@@ -60,16 +60,16 @@ class _NeumorphicFabState extends State<NeumorphicFab> {
               : [
                   // Raised appearance when not pressed
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    offset: const Offset(6, 6),
-                    blurRadius: 12,
-                    spreadRadius: 1,
+                    color: Colors.black.withValues(alpha: 0.15),
+                    offset: const Offset(2, 2),
+                    blurRadius: 6,
+                    spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    offset: const Offset(-6, -6),
-                    blurRadius: 12,
-                    spreadRadius: 1,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    offset: const Offset(-0.5, -0.5),
+                    blurRadius: 1,
+                    spreadRadius: 0,
                   ),
                 ],
         ),
@@ -78,4 +78,3 @@ class _NeumorphicFabState extends State<NeumorphicFab> {
     );
   }
 }
-

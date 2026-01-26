@@ -10,3 +10,16 @@ final userEventsProvider = FutureProvider<List<EventModel>>((ref) async {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.getEventsByCreator(user.id);
 });
+
+final userEventsByIdProvider = FutureProvider.family<List<EventModel>, String>((ref, userId) async {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getEventsByCreator(userId);
+});
+
+final bookmarkedEventsProvider = FutureProvider<List<EventModel>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const <EventModel>[];
+
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getBookmarkedEvents(user.id);
+});

@@ -9,10 +9,7 @@ import 'package:whos_got_what/core/theme/text_styles.dart';
 class AuthScreen extends ConsumerStatefulWidget {
   final bool isLoginMode;
 
-  const AuthScreen({
-    super.key,
-    this.isLoginMode = false,
-  });
+  const AuthScreen({super.key, this.isLoginMode = false});
 
   @override
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
@@ -23,6 +20,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _acceptedTerms = false;
   late bool _isLoginMode;
 
   @override
@@ -32,13 +30,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _signIn() async {
+    if (!_acceptedTerms) {
+      _showTermsRequired();
+      return;
+    }
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter both email and password to sign in.')),
+          const SnackBar(
+            content: Text('Please enter both email and password to sign in.'),
+          ),
         );
       }
       return;
@@ -46,58 +50,102 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).signInWithEmailPassword(
-            email: email,
-            password: password,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signInWithEmailPassword(email: email, password: password);
       if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
       if (!mounted) return;
-      final msg = e.message.contains('Anonymous sign-ins are disabled')
-          ? 'Sign-in requires an email and password. Please fill in both fields.'
-          : e.message;
+      final msg =
+          e.message.contains('Anonymous sign-ins are disabled')
+              ? 'Sign-in requires an email and password. Please fill in both fields.'
+              : e.message;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email to reset password.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password reset email sent!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _signInWithGoogle() async {
+    if (!_acceptedTerms) {
+      _showTermsRequired();
+      return;
+    }
     if (_isGoogleLoading) return;
     setState(() => _isGoogleLoading = true);
     try {
       final supabase = Supabase.instance.client;
       await supabase.auth.signInWithOAuth(OAuthProvider.google);
-      // auth state + router will handle navigation after successful OAuth
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Google sign-in failed: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google sign-in failed: ${e.message}')),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
   Future<void> _signUp() async {
+    if (!_acceptedTerms) {
+      _showTermsRequired();
+      return;
+    }
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter both email and password to sign up.')),
+          const SnackBar(
+            content: Text('Please enter both email and password to sign up.'),
+          ),
         );
       }
       return;
     }
 
-    // Basic email validation regex
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(email)) {
       if (mounted) {
@@ -110,19 +158,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).signUpWithEmailPassword(
-            email: email,
-            password: password,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signUpWithEmailPassword(email: email, password: password);
       if (mounted) context.go('/welcome');
     } on AuthException catch (e) {
       if (!mounted) return;
-      final msg = e.message.contains('Anonymous sign-ins are disabled')
-          ? 'Sign-up requires an email and password. Please fill in both fields.'
-          : e.message;
+      final msg =
+          e.message.contains('Anonymous sign-ins are disabled')
+              ? 'Sign-up requires an email and password. Please fill in both fields.'
+              : e.message;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -133,7 +185,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isLoginMode ? 'Log in to Who\'s Got What' : 'Sign up to see Who\'s Got What',
+          _isLoginMode
+              ? 'Log in to Streetside Local'
+              : 'Sign up to see Streetside Local',
           style: AppTextStyles.titleLarge(context),
         ),
       ),
@@ -145,6 +199,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Image.asset(
+                    'assets/icons/all-icons/NewAppIcons/appstore.png',
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   _isLoginMode ? 'Welcome back' : 'Create your account',
                   style: AppTextStyles.headlinePrimary(context),
@@ -153,13 +215,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 24),
                 OutlinedButton.icon(
                   onPressed: _isGoogleLoading ? null : _signInWithGoogle,
-                  icon: _isGoogleLoading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.login),
+                  icon:
+                      _isGoogleLoading
+                          ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Icon(Icons.login),
                   label: Text(
                     'Continue with Google',
                     style: AppTextStyles.labelPrimary(context),
@@ -168,7 +231,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
@@ -176,7 +239,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         style: AppTextStyles.captionMuted(context),
                       ),
                     ),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -192,6 +255,41 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   hintText: 'Enter your password',
                   labelText: 'Password',
                   obscureText: true,
+                ),
+                if (_isLoginMode)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : _resetPassword,
+                      child: Text(
+                        'Forgot password?',
+                        style: AppTextStyles.captionMuted(context),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _acceptedTerms,
+                      onChanged:
+                          _isLoading
+                              ? null
+                              : (value) {
+                                setState(() {
+                                  _acceptedTerms = value ?? false;
+                                });
+                              },
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'I agree to the Terms & Conditions and acknowledge the Privacy Policy.',
+                        style: AppTextStyles.bodySmall(context),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 if (_isLoading)
@@ -224,6 +322,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showTermsRequired() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please accept the terms to continue.')),
     );
   }
 }

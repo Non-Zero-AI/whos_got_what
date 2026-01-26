@@ -142,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
               children: [
                 // Header and subheader grouped together
                 Text(
-                  "Who's Got What",
+                  'Streetside Local',
                   style: AppTextStyles.headlinePrimary(
                     context,
                   ).copyWith(color: Colors.white, fontSize: 32),

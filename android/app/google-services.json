@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960602325598",
+    "project_id": "what-s-appening-6e16d",
+    "storage_bucket": "what-s-appening-6e16d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960602325598:android:543f799a0299b0e971aacf",
+        "android_client_info": {
+          "package_name": "com.whosgotwhat.whos_got_what"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgRFcTi3KtzYPwXkzTBU5b9VET0tmulHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

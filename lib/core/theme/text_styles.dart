@@ -81,12 +81,12 @@ class AppTextStyles {
   static TextStyle captionMuted(BuildContext context) {
     final theme = Theme.of(context);
     return theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.95),
           fontSize: 12,
         ) ??
         TextStyle(
           fontSize: 12,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.95),
         );
   }
 
@@ -94,11 +94,11 @@ class AppTextStyles {
   static TextStyle labelSecondary(BuildContext context) {
     final theme = Theme.of(context);
     return theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
         ) ??
         TextStyle(
           fontSize: 11,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
         );
   }
 

@@ -34,6 +34,17 @@ mixin _$EventModel {
   int get likes => throw _privateConstructorUsedError;
   int get views => throw _privateConstructorUsedError;
   bool get isBookmarked => throw _privateConstructorUsedError;
+  int get bookmarksCount => throw _privateConstructorUsedError;
+  String get planVisibility =>
+      throw _privateConstructorUsedError; // 'public', 'private'
+  int get creditsRequired => throw _privateConstructorUsedError;
+  int get totalSlots => throw _privateConstructorUsedError;
+  String? get recurrence =>
+      throw _privateConstructorUsedError; // 'none', 'daily', 'weekly', 'monthly'
+  double? get latitude => throw _privateConstructorUsedError;
+  double? get longitude => throw _privateConstructorUsedError;
+  bool get archived => throw _privateConstructorUsedError;
+  String get postType => throw _privateConstructorUsedError;
 
   /// Serializes this EventModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -66,6 +77,15 @@ abstract class $EventModelCopyWith<$Res> {
     int likes,
     int views,
     bool isBookmarked,
+    int bookmarksCount,
+    String planVisibility,
+    int creditsRequired,
+    int totalSlots,
+    String? recurrence,
+    double? latitude,
+    double? longitude,
+    bool archived,
+    String postType,
   });
 }
 
@@ -97,6 +117,15 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
     Object? likes = null,
     Object? views = null,
     Object? isBookmarked = null,
+    Object? bookmarksCount = null,
+    Object? planVisibility = null,
+    Object? creditsRequired = null,
+    Object? totalSlots = null,
+    Object? recurrence = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
+    Object? archived = null,
+    Object? postType = null,
   }) {
     return _then(
       _value.copyWith(
@@ -165,6 +194,51 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
                     ? _value.isBookmarked
                     : isBookmarked // ignore: cast_nullable_to_non_nullable
                         as bool,
+            bookmarksCount:
+                null == bookmarksCount
+                    ? _value.bookmarksCount
+                    : bookmarksCount // ignore: cast_nullable_to_non_nullable
+                        as int,
+            planVisibility:
+                null == planVisibility
+                    ? _value.planVisibility
+                    : planVisibility // ignore: cast_nullable_to_non_nullable
+                        as String,
+            creditsRequired:
+                null == creditsRequired
+                    ? _value.creditsRequired
+                    : creditsRequired // ignore: cast_nullable_to_non_nullable
+                        as int,
+            totalSlots:
+                null == totalSlots
+                    ? _value.totalSlots
+                    : totalSlots // ignore: cast_nullable_to_non_nullable
+                        as int,
+            recurrence:
+                freezed == recurrence
+                    ? _value.recurrence
+                    : recurrence // ignore: cast_nullable_to_non_nullable
+                        as String?,
+            latitude:
+                freezed == latitude
+                    ? _value.latitude
+                    : latitude // ignore: cast_nullable_to_non_nullable
+                        as double?,
+            longitude:
+                freezed == longitude
+                    ? _value.longitude
+                    : longitude // ignore: cast_nullable_to_non_nullable
+                        as double?,
+            archived:
+                null == archived
+                    ? _value.archived
+                    : archived // ignore: cast_nullable_to_non_nullable
+                        as bool,
+            postType:
+                null == postType
+                    ? _value.postType
+                    : postType // ignore: cast_nullable_to_non_nullable
+                        as String,
           )
           as $Val,
     );
@@ -194,6 +268,15 @@ abstract class _$$EventModelImplCopyWith<$Res>
     int likes,
     int views,
     bool isBookmarked,
+    int bookmarksCount,
+    String planVisibility,
+    int creditsRequired,
+    int totalSlots,
+    String? recurrence,
+    double? latitude,
+    double? longitude,
+    bool archived,
+    String postType,
   });
 }
 
@@ -224,6 +307,15 @@ class __$$EventModelImplCopyWithImpl<$Res>
     Object? likes = null,
     Object? views = null,
     Object? isBookmarked = null,
+    Object? bookmarksCount = null,
+    Object? planVisibility = null,
+    Object? creditsRequired = null,
+    Object? totalSlots = null,
+    Object? recurrence = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
+    Object? archived = null,
+    Object? postType = null,
   }) {
     return _then(
       _$EventModelImpl(
@@ -292,6 +384,51 @@ class __$$EventModelImplCopyWithImpl<$Res>
                 ? _value.isBookmarked
                 : isBookmarked // ignore: cast_nullable_to_non_nullable
                     as bool,
+        bookmarksCount:
+            null == bookmarksCount
+                ? _value.bookmarksCount
+                : bookmarksCount // ignore: cast_nullable_to_non_nullable
+                    as int,
+        planVisibility:
+            null == planVisibility
+                ? _value.planVisibility
+                : planVisibility // ignore: cast_nullable_to_non_nullable
+                    as String,
+        creditsRequired:
+            null == creditsRequired
+                ? _value.creditsRequired
+                : creditsRequired // ignore: cast_nullable_to_non_nullable
+                    as int,
+        totalSlots:
+            null == totalSlots
+                ? _value.totalSlots
+                : totalSlots // ignore: cast_nullable_to_non_nullable
+                    as int,
+        recurrence:
+            freezed == recurrence
+                ? _value.recurrence
+                : recurrence // ignore: cast_nullable_to_non_nullable
+                    as String?,
+        latitude:
+            freezed == latitude
+                ? _value.latitude
+                : latitude // ignore: cast_nullable_to_non_nullable
+                    as double?,
+        longitude:
+            freezed == longitude
+                ? _value.longitude
+                : longitude // ignore: cast_nullable_to_non_nullable
+                    as double?,
+        archived:
+            null == archived
+                ? _value.archived
+                : archived // ignore: cast_nullable_to_non_nullable
+                    as bool,
+        postType:
+            null == postType
+                ? _value.postType
+                : postType // ignore: cast_nullable_to_non_nullable
+                    as String,
       ),
     );
   }
@@ -314,6 +451,15 @@ class _$EventModelImpl implements _EventModel {
     this.likes = 0,
     this.views = 0,
     this.isBookmarked = false,
+    this.bookmarksCount = 0,
+    this.planVisibility = 'public',
+    this.creditsRequired = 0,
+    this.totalSlots = 0,
+    this.recurrence,
+    this.latitude,
+    this.longitude,
+    this.archived = false,
+    this.postType = 'event',
   });
 
   factory _$EventModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -349,10 +495,36 @@ class _$EventModelImpl implements _EventModel {
   @override
   @JsonKey()
   final bool isBookmarked;
+  @override
+  @JsonKey()
+  final int bookmarksCount;
+  @override
+  @JsonKey()
+  final String planVisibility;
+  // 'public', 'private'
+  @override
+  @JsonKey()
+  final int creditsRequired;
+  @override
+  @JsonKey()
+  final int totalSlots;
+  @override
+  final String? recurrence;
+  // 'none', 'daily', 'weekly', 'monthly'
+  @override
+  final double? latitude;
+  @override
+  final double? longitude;
+  @override
+  @JsonKey()
+  final bool archived;
+  @override
+  @JsonKey()
+  final String postType;
 
   @override
   String toString() {
-    return 'EventModel(id: $id, title: $title, description: $description, startDate: $startDate, endDate: $endDate, isAllDay: $isAllDay, location: $location, price: $price, imageUrl: $imageUrl, organizerId: $organizerId, likes: $likes, views: $views, isBookmarked: $isBookmarked)';
+    return 'EventModel(id: $id, title: $title, description: $description, startDate: $startDate, endDate: $endDate, isAllDay: $isAllDay, location: $location, price: $price, imageUrl: $imageUrl, organizerId: $organizerId, likes: $likes, views: $views, isBookmarked: $isBookmarked, bookmarksCount: $bookmarksCount, planVisibility: $planVisibility, creditsRequired: $creditsRequired, totalSlots: $totalSlots, recurrence: $recurrence, latitude: $latitude, longitude: $longitude, archived: $archived, postType: $postType)';
   }
 
   @override
@@ -379,12 +551,30 @@ class _$EventModelImpl implements _EventModel {
             (identical(other.likes, likes) || other.likes == likes) &&
             (identical(other.views, views) || other.views == views) &&
             (identical(other.isBookmarked, isBookmarked) ||
-                other.isBookmarked == isBookmarked));
+                other.isBookmarked == isBookmarked) &&
+            (identical(other.bookmarksCount, bookmarksCount) ||
+                other.bookmarksCount == bookmarksCount) &&
+            (identical(other.planVisibility, planVisibility) ||
+                other.planVisibility == planVisibility) &&
+            (identical(other.creditsRequired, creditsRequired) ||
+                other.creditsRequired == creditsRequired) &&
+            (identical(other.totalSlots, totalSlots) ||
+                other.totalSlots == totalSlots) &&
+            (identical(other.recurrence, recurrence) ||
+                other.recurrence == recurrence) &&
+            (identical(other.latitude, latitude) ||
+                other.latitude == latitude) &&
+            (identical(other.longitude, longitude) ||
+                other.longitude == longitude) &&
+            (identical(other.archived, archived) ||
+                other.archived == archived) &&
+            (identical(other.postType, postType) ||
+                other.postType == postType));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     id,
     title,
@@ -399,7 +589,16 @@ class _$EventModelImpl implements _EventModel {
     likes,
     views,
     isBookmarked,
-  );
+    bookmarksCount,
+    planVisibility,
+    creditsRequired,
+    totalSlots,
+    recurrence,
+    latitude,
+    longitude,
+    archived,
+    postType,
+  ]);
 
   /// Create a copy of EventModel
   /// with the given fields replaced by the non-null parameter values.
@@ -430,6 +629,15 @@ abstract class _EventModel implements EventModel {
     final int likes,
     final int views,
     final bool isBookmarked,
+    final int bookmarksCount,
+    final String planVisibility,
+    final int creditsRequired,
+    final int totalSlots,
+    final String? recurrence,
+    final double? latitude,
+    final double? longitude,
+    final bool archived,
+    final String postType,
   }) = _$EventModelImpl;
 
   factory _EventModel.fromJson(Map<String, dynamic> json) =
@@ -461,6 +669,24 @@ abstract class _EventModel implements EventModel {
   int get views;
   @override
   bool get isBookmarked;
+  @override
+  int get bookmarksCount;
+  @override
+  String get planVisibility; // 'public', 'private'
+  @override
+  int get creditsRequired;
+  @override
+  int get totalSlots;
+  @override
+  String? get recurrence; // 'none', 'daily', 'weekly', 'monthly'
+  @override
+  double? get latitude;
+  @override
+  double? get longitude;
+  @override
+  bool get archived;
+  @override
+  String get postType;
 
   /// Create a copy of EventModel
   /// with the given fields replaced by the non-null parameter values.

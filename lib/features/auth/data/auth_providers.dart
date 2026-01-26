@@ -14,3 +14,5 @@ final currentUserProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider);
   return authState.value?.session?.user ?? ref.watch(authRepositoryProvider).currentUser;
 });
+
+final supabaseClientProvider = Provider<SupabaseClient>((ref) => Supabase.instance.client);
