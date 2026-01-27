@@ -22,7 +22,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
 
     final profileAsync = ref.watch(profileControllerProvider);
     final profile = profileAsync.value;
-    final isPaid = profile?.role == 'paid';
+    final isPaid = profile?.role == 'paid' || profile?.role == 'unlimited';
     final isDevMode = ref.watch(devModeProvider);
 
     // Simplified FAB visibility: Show on all main branch roots

@@ -9,6 +9,8 @@
 		<string>applinks:streetside.app</string>
 	</array>
 	<key>com.apple.developer.in-app-payments</key>
-	<array/>
+	<array>
+		<string>merchant.com.clonelabs.streetsidelocal</string>
+	</array>
 </dict>
 </plist>

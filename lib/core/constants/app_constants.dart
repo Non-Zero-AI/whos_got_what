@@ -1,16 +1,25 @@
 class AppConstants {
   // Supabase
-  static const String supabaseUrl = 'https://nxxjkoiktpfqbslpgfmn.supabase.co';
-  static const String supabaseAnonKey =
-      'sb_publishable_MZb0CyqT-eAW3kGCl3oU0g_uERUWuEM';
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
 
   // Stripe
-  static const String stripePublishableKey =
-      'pk_live_51RE9XvJ0dMnFEmoQzbXElvh83OwYwXpMFJLdgmcGlV7lDxWtvAPQSGc6GWFVF59UZHmiS4uwgrzP5xT33ooHznik00LzgRw28V';
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: '',
+  );
 
   // Google Maps
-  static const String googleMapsApiKey =
-      'AIzaSyB0bkv1p5yhPGR2DNfwj5dJJXVSjKGjk6k';
+  static const String googleMapsApiKey = String.fromEnvironment(
+    'GOOGLE_MAPS_API_KEY',
+    defaultValue: '',
+  );
 
   // NOTE: Secret keys should NEVER be stored in the app. Use them in Supabase Edge Functions.
 

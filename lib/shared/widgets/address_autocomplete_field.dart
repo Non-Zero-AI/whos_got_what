@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:whos_got_what/shared/widgets/neumorphic_text_field.dart';
 import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
-import 'package:whos_got_what/core/constants/app_constants.dart';
+import 'package:whos_got_what/core/constants/app_runtime_config.dart';
 import 'package:whos_got_what/core/theme/text_styles.dart';
 
 /// Address autocomplete field using Google Places API
@@ -23,7 +23,8 @@ class AddressAutocompleteField extends StatefulWidget {
   });
 
   @override
-  State<AddressAutocompleteField> createState() => _AddressAutocompleteFieldState();
+  State<AddressAutocompleteField> createState() =>
+      _AddressAutocompleteFieldState();
 }
 
 class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
@@ -51,7 +52,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/place/autocomplete/json'
         '?input=$encodedQuery'
-        '&key=${AppConstants.googleMapsApiKey}'
+        '&key=${AppRuntimeConfig.googleMapsApiKey}'
         '&components=country:us', // Restrict to USA
       );
 
@@ -63,10 +64,12 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
 
         setState(() {
           _suggestions = predictions
-              .map((p) => {
-                    'description': p['description'] as String,
-                    'place_id': p['place_id'] as String,
-                  })
+              .map(
+                (p) => {
+                  'description': p['description'] as String,
+                  'place_id': p['place_id'] as String,
+                },
+              )
               .toList();
           _isLoading = false;
         });
@@ -91,7 +94,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
       _suggestions = [];
       _lastQuery = '';
     });
-    
+
     widget.controller.text = description;
 
     LatLng? coords;
@@ -102,7 +105,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/place/details/json'
         '?place_id=$placeId'
-        '&key=${AppConstants.googleMapsApiKey}'
+        '&key=${AppRuntimeConfig.googleMapsApiKey}'
         '&fields=formatted_address,geometry',
       );
 
@@ -110,14 +113,15 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final result = data['result'] as Map<String, dynamic>?;
-        
+
         final formattedAddress = result?['formatted_address'] as String?;
         if (formattedAddress != null) {
           finalAddress = formattedAddress;
           widget.controller.text = formattedAddress;
         }
 
-        final location = result?['geometry']?['location'] as Map<String, dynamic>?;
+        final location =
+            result?['geometry']?['location'] as Map<String, dynamic>?;
         if (location != null) {
           coords = LatLng(
             (location['lat'] as num).toDouble(),
@@ -169,7 +173,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
                       itemCount: _suggestions.length,
                       separatorBuilder: (_, __) => Divider(
                         height: 1,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.1,
+                        ),
                       ),
                       itemBuilder: (context, index) {
                         final suggestion = _suggestions[index];
@@ -201,4 +207,3 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
     );
   }
 }
-

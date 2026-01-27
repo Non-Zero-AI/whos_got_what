@@ -1,0 +1,6 @@
+"NSCameraUsageDescription" = "We use the camera to let you add photos to your profile and events.";
+"NSPhotoLibraryUsageDescription" = "We use your photo library to let you select images for your profile and events.";
+"NSPhotoLibraryAddUsageDescription" = "We save images you create to your photo library when you choose to export them.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "We need your location to show events near you on the map.";
+"NSLocationAlwaysUsageDescription" = "We need your location to show events near you on the map.";
+"NSLocationWhenInUseUsageDescription" = "We need your location to show events near you on the map.";

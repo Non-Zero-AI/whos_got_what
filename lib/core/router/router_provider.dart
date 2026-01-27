@@ -11,7 +11,6 @@ import 'package:whos_got_what/features/onboarding/presentation/screens/welcome_o
 import 'package:whos_got_what/features/onboarding/presentation/screens/intro_carousel_screen.dart';
 import 'package:whos_got_what/features/profile/presentation/screens/profile_screen.dart';
 import 'package:whos_got_what/features/profile/presentation/screens/follow_list_screen.dart';
-import 'package:whos_got_what/features/splash/presentation/screens/splash_screen.dart';
 import 'package:whos_got_what/features/profile/presentation/screens/my_events_screen.dart';
 import 'package:whos_got_what/features/settings/presentation/screens/settings_screen.dart';
 import 'package:whos_got_what/shared/widgets/scaffold_with_navbar.dart';
@@ -88,10 +87,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
       GoRoute(
         path: '/intro',
         builder: (context, state) => const IntroCarouselScreen(),

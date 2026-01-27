@@ -7,6 +7,18 @@
 .vscode/
 
 # Flutter/Dart related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+ios/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral
+android/local.properties
+android/app/debug
+android/app/profile
+android/app/release
 **/whos_got_what/.dart_tool/
 **/whos_got_what/.flutter-plugins
 **/whos_got_what/.flutter-plugins-dependencies

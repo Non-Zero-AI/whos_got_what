@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/shared/widgets/neumorphic_container.dart';
 import 'package:whos_got_what/core/theme/text_styles.dart';
 
@@ -22,11 +24,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   late StreamSubscription<List<PurchaseDetails>> _subscription;
   List<ProductDetails> _products = [];
   bool _loading = true;
+  bool _restoreInProgress = false;
+  int _restoredCount = 0;
+  Timer? _restoreSummaryTimer;
 
   static const _productIds = {
-    'pro_user_monthly',
-    'unlimited_monthly',
-    'single_event_credit',
+    'SINGLE_EVENT_CREDIT',
+    'Pro_User',
+    'UNLIMITED_TIER',
   };
 
   @override
@@ -44,6 +49,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   void dispose() {
     _subscription.cancel();
+    _restoreSummaryTimer?.cancel();
     super.dispose();
   }
 
@@ -72,14 +78,24 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseList) {
     for (final purchase in purchaseList) {
+      debugPrint(
+        'IAP update: ${purchase.productID} status=${purchase.status} '
+        'pendingComplete=${purchase.pendingCompletePurchase}',
+      );
       if (purchase.status == PurchaseStatus.pending) {
-        // Show loading state if needed
+        debugPrint('IAP pending: ${purchase.productID}');
       } else {
         if (purchase.status == PurchaseStatus.error) {
           _handleError(purchase.error!);
         } else if (purchase.status == PurchaseStatus.purchased ||
             purchase.status == PurchaseStatus.restored) {
           _verifyPurchase(purchase);
+
+          if (purchase.status == PurchaseStatus.restored &&
+              _restoreInProgress) {
+            _restoredCount += 1;
+            _scheduleRestoreSummary();
+          }
         }
         if (purchase.pendingCompletePurchase) {
           _iap.completePurchase(purchase);
@@ -89,35 +105,87 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Future<void> _verifyPurchase(PurchaseDetails purchase) async {
-    final profile = ref.read(profileControllerProvider).value;
-    if (profile == null) return;
-
-    Profile updatedProfile = profile;
-    if (purchase.productID == 'pro_user_monthly') {
-      updatedProfile = profile.copyWith(role: 'paid');
-    } else if (purchase.productID == 'unlimited_monthly') {
-      updatedProfile = profile.copyWith(role: 'unlimited');
-    } else if (purchase.productID == 'single_event_credit') {
-      updatedProfile = profile.copyWith(credits: profile.credits + 1);
-    }
-
-    await ref
-        .read(profileControllerProvider.notifier)
-        .updateProfile(updatedProfile);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Purchase successful! Thank you for your support.'),
-        ),
+    try {
+      final supabase = Supabase.instance.client;
+      final response = await supabase.functions.invoke(
+        'verify-purchase',
+        body: {
+          'productId': purchase.productID,
+          'purchaseToken': purchase.purchaseID ?? purchase.verificationData.serverVerificationData,
+          'status': purchase.status.name,
+          'payload': purchase.verificationData.localVerificationData,
+        },
       );
-      context.go('/home');
+
+      if (response.status != 200) {
+        throw Exception('Backend verification failed: ${response.data}');
+      }
+
+      // Refresh profile to reflect backend changes
+      await ref.read(profileControllerProvider.notifier).reload();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Purchase verified! Thank you for your support.'),
+          ),
+        );
+        context.go('/home');
+      }
+    } catch (e) {
+      debugPrint('Verification error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verification failed: $e')),
+        );
+      }
     }
   }
 
   void _handleError(IAPError error) {
+    debugPrint('IAP error: ${error.code} ${error.message}');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Payment failure: ${error.message}')),
     );
+  }
+
+  Future<void> _restorePurchases() async {
+    try {
+      _restoreInProgress = true;
+      _restoredCount = 0;
+      _scheduleRestoreSummary();
+      await _iap.restorePurchases();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Restore started...')));
+      }
+    } catch (e) {
+      debugPrint('Restore purchases failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Restore failed. Try again.')),
+        );
+      }
+    }
+  }
+
+  void _scheduleRestoreSummary() {
+    _restoreSummaryTimer?.cancel();
+    _restoreSummaryTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      final count = _restoredCount;
+      final message = count == 0
+          ? 'No previous purchases found.'
+          : 'Restored $count purchase${count == 1 ? '' : 's'}.';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+
+      _restoreInProgress = false;
+      _restoredCount = 0;
+    });
   }
 
   @override
@@ -132,41 +200,44 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           title: const Text('Upgrade Account'),
           backgroundColor: Colors.transparent,
         ),
-        body:
-            _loading
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        "Choose a plan that works for you",
-                        style: AppTextStyles.headlinePrimary(context),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "Unlock premium features and post more events",
-                        style: AppTextStyles.body(context).copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "Choose a plan that works for you",
+                      style: AppTextStyles.headlinePrimary(context),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Unlock premium features and post more events",
+                      style: AppTextStyles.body(context).copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 32),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
 
-                      ..._buildPlanCards(theme),
+                    ..._buildPlanCards(theme),
 
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => context.go('/home'),
-                        child: const Text('Maybe Later'),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text('Maybe Later'),
+                    ),
+                    TextButton(
+                      onPressed: _restorePurchases,
+                      child: const Text('Restore Purchases'),
+                    ),
+                  ],
                 ),
+              ),
       ),
     );
   }
@@ -175,21 +246,21 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     // Define the 3 core plans
     final plans = [
       {
-        'id': 'single_event_credit',
+        'id': 'SINGLE_EVENT_CREDIT',
         'title': 'Single Event Credit',
         'price': '\$4.99',
         'period': 'one-time',
         'secondary': true,
       },
       {
-        'id': 'pro_user_monthly',
+        'id': 'Pro_User',
         'title': 'Pro Subscriber',
         'price': '\$14.99',
         'period': 'per month',
         'secondary': false,
       },
       {
-        'id': 'unlimited_monthly',
+        'id': 'UNLIMITED_TIER',
         'title': 'Unlimited Pass',
         'price': '\$24.99',
         'period': 'per month',
@@ -200,10 +271,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return plans.map((plan) {
       final productId = plan['id'] as String;
       // Try to find the actual IAP product for price/details if available
-      final product =
-          _products.any((p) => p.id == productId)
-              ? _products.firstWhere((p) => p.id == productId)
-              : null;
+      final product = _products.any((p) => p.id == productId)
+          ? _products.firstWhere((p) => p.id == productId)
+          : null;
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 24),
@@ -214,41 +284,40 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           features: _getFeaturesFor(productId),
           buttonText: product != null ? 'Purchase' : 'Loading...',
           secondary: plan['secondary'] as bool,
-          onPressed:
-              product != null
-                  ? () {
-                    final isSubscription = productId.contains('monthly');
-                    final PurchaseParam purchaseParam = PurchaseParam(
-                      productDetails: product,
-                    );
-                    if (isSubscription) {
-                      _iap.buyNonConsumable(purchaseParam: purchaseParam);
-                    } else {
-                      _iap.buyConsumable(purchaseParam: purchaseParam);
-                    }
+          onPressed: product != null
+              ? () {
+                  final isSubscription = productId == 'Pro_User' || productId == 'UNLIMITED_TIER';
+                  final PurchaseParam purchaseParam = PurchaseParam(
+                    productDetails: product,
+                  );
+                  if (isSubscription) {
+                    _iap.buyNonConsumable(purchaseParam: purchaseParam);
+                  } else {
+                    _iap.buyConsumable(purchaseParam: purchaseParam);
                   }
-                  : null, // Disable if store product not found yet
+                }
+              : null, // Disable if store product not found yet
         ),
       );
     }).toList();
   }
 
   List<String> _getFeaturesFor(String productId) {
-    if (productId == 'pro_user_monthly') {
+    if (productId == 'Pro_User') {
       return [
         'Up to 3 concurrent active events',
         'Slots renew as events end',
         'Custom business profile',
         'Priority support',
       ];
-    } else if (productId == 'unlimited_monthly') {
+    } else if (productId == 'UNLIMITED_TIER') {
       return [
         'Unlimited concurrent active events',
         'Full platform access',
         'Advanced analytics',
         'Featured placement',
       ];
-    } else if (productId == 'single_event_credit') {
+    } else if (productId == 'SINGLE_EVENT_CREDIT') {
       return [
         'Post 1 event credit',
         'No monthly commitment',
@@ -338,14 +407,12 @@ class _PaymentCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    secondary
-                        ? theme.colorScheme.surface
-                        : theme.colorScheme.primary,
-                foregroundColor:
-                    secondary
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onPrimary,
+                backgroundColor: secondary
+                    ? theme.colorScheme.surface
+                    : theme.colorScheme.primary,
+                foregroundColor: secondary
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(buttonText),

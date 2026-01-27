@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:whos_got_what/core/constants/app_constants.dart';
+import 'package:whos_got_what/core/constants/app_runtime_config.dart';
 import 'package:whos_got_what/core/router/router_provider.dart';
 import 'package:whos_got_what/core/theme/app_theme.dart';
 import 'package:whos_got_what/core/theme/theme_provider.dart';
@@ -15,8 +19,117 @@ import 'package:whos_got_what/features/notifications/data/notification_providers
 /// Whether Firebase was successfully initialized
 bool firebaseInitialized = false;
 
+void _validateRequiredConfig() {
+  final missing = <String>[];
+
+  if (AppConstants.supabaseUrl.isEmpty) {
+    missing.add('SUPABASE_URL');
+  }
+
+  if (AppConstants.supabaseAnonKey.isEmpty) {
+    missing.add('SUPABASE_ANON_KEY');
+  }
+
+  if (missing.isNotEmpty) {
+    throw StateError(
+      'Missing required configuration: ${missing.join(', ')}. '
+      'Provide values via --dart-define or DART_DEFINES in build settings.',
+    );
+  }
+}
+
+String _readConfigValue(Map<String, dynamic> data, List<String> keys) {
+  for (final key in keys) {
+    final value = data[key];
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+  }
+  return '';
+}
+
+Future<void> _loadRemoteConfig(SupabaseClient client) async {
+  const functionName = String.fromEnvironment(
+    'PUBLIC_CONFIG_FUNCTION',
+    defaultValue: 'public-config',
+  );
+
+  if (functionName.isEmpty) {
+    return;
+  }
+
+  try {
+    final response = await client.functions.invoke(functionName);
+    final payload = response.data;
+    Map<String, dynamic>? data;
+
+    if (payload is Map) {
+      data = payload.cast<String, dynamic>();
+    } else if (payload is String) {
+      final decoded = json.decode(payload);
+      if (decoded is Map) {
+        data = decoded.cast<String, dynamic>();
+      }
+    }
+
+    if (data == null) {
+      debugPrint('Remote config response is not a map.');
+      return;
+    }
+
+    final stripeKey = _readConfigValue(data, [
+      'stripe_publishable_key',
+      'stripePublishableKey',
+      'stripeKey',
+      'STRIPE_PUB_KEY',
+    ]);
+
+    final mapsKey = _readConfigValue(data, [
+      'google_maps_api_key',
+      'googleMapsApiKey',
+      'googleMapsKey',
+      'GOOGLE_MAPS_API',
+    ]);
+
+    if (stripeKey.isNotEmpty) {
+      AppRuntimeConfig.stripePublishableKey = stripeKey;
+    }
+
+    if (mapsKey.isNotEmpty) {
+      AppRuntimeConfig.googleMapsApiKey = mapsKey;
+    }
+  } catch (e) {
+    debugPrint('Failed to load remote config: $e');
+  }
+}
+
+Future<void> _configureStripe() async {
+  final publishableKey = AppRuntimeConfig.stripePublishableKey;
+  if (publishableKey.isEmpty) {
+    debugPrint('Stripe publishable key is missing.');
+    return;
+  }
+
+  Stripe.publishableKey = publishableKey;
+  await Stripe.instance.applySettings();
+}
+
+void _warnIfOptionalConfigMissing() {
+  if (AppRuntimeConfig.googleMapsApiKey.isEmpty) {
+    debugPrint(
+      'Google Maps API key is missing. Maps/Places features may not work.',
+    );
+  }
+
+  if (AppRuntimeConfig.stripePublishableKey.isEmpty) {
+    debugPrint('Stripe publishable key is missing. Payments disabled.');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  _validateRequiredConfig();
 
   // Initialize Firebase with options
   try {
@@ -34,6 +147,10 @@ void main() async {
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
   );
+
+  await _loadRemoteConfig(Supabase.instance.client);
+  await _configureStripe();
+  _warnIfOptionalConfigMissing();
 
   runApp(const ProviderScope(child: StreetsideLocalApp()));
 }
@@ -101,10 +218,9 @@ class _StreetsideLocalAppState extends ConsumerState<StreetsideLocalApp> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors:
-                      isDark
-                          ? AppTheme.darkGradientColors
-                          : AppTheme.lightGradientColors,
+                  colors: isDark
+                      ? AppTheme.darkGradientColors
+                      : AppTheme.lightGradientColors,
                 ),
               ),
             ),
