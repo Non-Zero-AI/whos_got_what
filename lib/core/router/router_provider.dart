@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:whos_got_what/features/auth/data/auth_providers.dart';
@@ -18,8 +20,6 @@ import 'package:whos_got_what/features/design_system_demo/design_system_demo_scr
 import 'package:whos_got_what/features/payment/presentation/screens/subscription_screen.dart';
 import 'package:whos_got_what/features/payment/presentation/screens/payment_screen.dart';
 import 'package:whos_got_what/features/profile/data/profile_providers.dart';
-import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whos_got_what/features/profile/data/profile_repository.dart'; // For Profile type
 import 'package:whos_got_what/features/feedback/presentation/screens/feedback_screen.dart';
 import 'package:whos_got_what/features/notifications/presentation/notifications_screen.dart';
@@ -50,7 +50,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     initialLocation: '/home',
     debugLogDiagnostics: kDebugMode,
+    onException: (context, state, router) {
+      debugPrint('Router Exception: ${state.error} at ${state.uri}');
+    },
     redirect: (context, state) {
+      if (kDebugMode) {
+        debugPrint('Navigating to: ${state.uri} from deep link? ${state.uri.queryParameters.isNotEmpty}');
+      }
       final authState = ref.read(authStateProvider);
       // Wait for auth to initialize
       if (authState.isLoading || !authState.hasValue) return null;
