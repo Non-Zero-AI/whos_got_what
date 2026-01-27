@@ -30,12 +30,8 @@
 	<string>$(GOOGLE_MAPS_API_KEY)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to show events near you on the map.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>We need your location to show events near you on the map.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to show events near you on the map.</string>
+	<string>We need your location to show events happening near you and help you navigate to them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We use the camera to let you add photos to your profile and events.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
